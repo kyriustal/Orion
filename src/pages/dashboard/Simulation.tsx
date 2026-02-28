@@ -71,7 +71,11 @@ export default function Simulation() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao comunicar com a IA");
+        // Build a detailed error message from all available fields
+        const errorMsg = data.details
+          ? `${data.error} \n\nDetalhes técnicos: ${data.details}${data.code ? ` [${data.code}]` : ''}`
+          : (data.error || "Erro desconhecido ao comunicar com a IA");
+        throw new Error(errorMsg);
       }
 
       setMessages(prev => [...prev, {
