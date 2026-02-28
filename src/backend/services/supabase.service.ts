@@ -4,8 +4,8 @@ let supabaseClient: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!supabaseClient) {
-    const url = process.env.SUPABASE_URL?.trim();
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    const url = process.env.SUPABASE_URL?.trim() || 'https://sttiilomvksodyybtlas.supabase.co';
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0dGlpbG9tdmtzb2R5eWJ0bGFzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjMwODI1NywiZXhwIjoyMDg3ODg0MjU3fQ.-zwt31wGMqI9eklmQrcbWxU9-PYJBycsRmmjTzsVhXM';
 
     if (!url || !key) {
       console.error('CRITICAL: Supabase environment variables (URL or KEY) are missing!');

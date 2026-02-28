@@ -5,8 +5,7 @@ let ai: GoogleGenAI | null = null;
 
 export function getGeminiClient(): GoogleGenAI {
   if (!ai) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY is required');
+    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyAwIN4X0wQkNQi8BdIyRfQ_FCgY1JmFzoM";
     ai = new GoogleGenAI({ apiKey });
   }
   return ai;
