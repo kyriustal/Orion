@@ -4,21 +4,27 @@ let supabaseClient: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!supabaseClient) {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = process.env.SUPABASE_URL?.trim();
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
     if (!url || !key) {
       console.error('CRITICAL: Supabase environment variables (URL or KEY) are missing!');
       console.warn('Backend will use MOCK data. Login will FAIL.');
-      // Mock client para evitar crash se as variáveis não estiverem configuradas
+      // ... (mock implementation remains same) ...
       return {
         from: () => ({
-          select: () => ({ eq: () => ({ single: () => ({ data: null }), order: () => ({ limit: () => ({ data: [] }) }) }) }),
-          insert: () => ({ select: () => ({ single: () => ({ data: { id: 'mock' } }) }), then: (cb: any) => cb({ data: null }) }),
+          select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'SUPABASE_KEYS_MISSING' } }), order: () => ({ limit: () => ({ data: [] }) }) }) }),
+          insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: { id: 'mock' } }) }), then: (cb: any) => cb({ data: null }) }),
           update: () => ({ eq: () => ({ then: (cb: any) => cb({ data: null }) }) })
         })
       } as any;
     }
+
+    // Basic check for service_role
+    if (key.includes('anon')) {
+      console.error('WARNING: You seem to be using an ANON key instead of SERVICE_ROLE key!');
+    }
+
     supabaseClient = createClient(url, key);
   }
   return supabaseClient;

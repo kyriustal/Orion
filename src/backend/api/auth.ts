@@ -21,7 +21,11 @@ authRouter.post('/login', async (req, res) => {
 
     if (error) {
       console.error('Supabase Login Error:', error);
-      return res.status(500).json({ error: 'Erro de conexão com o banco de dados. Verifique os logs do servidor.' });
+      return res.status(500).json({
+        error: 'Erro de conexão com o banco de dados.',
+        details: error.message,
+        code: error.code
+      });
     }
 
     if (!org) {
