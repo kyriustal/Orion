@@ -10,9 +10,28 @@ import {
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 
+import { useState, useEffect } from 'react';
+
 export default function DashboardLayout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState({ name: 'Carregando...', email: '' });
+
+  useEffect(() => {
+    fetch("/api/auth/me", {
+      headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setUser({
+            name: data.user.name || "Usuário",
+            email: data.user.email
+          });
+        }
+      })
+      .catch(err => console.error("Erro ao carregar usuário:", err));
+  }, []);
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -78,8 +97,8 @@ export default function DashboardLayout() {
             <div className="flex items-center gap-3 mb-4 px-2">
               <UserCircle className="w-10 h-10 text-zinc-400" />
               <div className="flex-1 min-w-0">
-                <p className="text-base font-medium text-white truncate">Administrador</p>
-                <p className="text-sm text-zinc-400 truncate">admin@orion.com</p>
+                <p className="text-base font-medium text-white truncate">{user.name}</p>
+                <p className="text-sm text-zinc-400 truncate">{user.email}</p>
               </div>
             </div>
             <button
@@ -126,16 +145,16 @@ export default function DashboardLayout() {
               <button className="flex items-center gap-3 w-full px-2 py-2 rounded-md hover:bg-zinc-100 transition-colors text-left">
                 <UserCircle className="w-8 h-8 text-zinc-400" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-900 truncate">Administrador</p>
-                  <p className="text-xs text-zinc-500 truncate">admin@orion.com</p>
+                  <p className="text-sm font-medium text-zinc-900 truncate">{user.name}</p>
+                  <p className="text-xs text-zinc-500 truncate">{user.email}</p>
                 </div>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Administrador</p>
-                  <p className="text-xs leading-none text-zinc-500">admin@orion.com</p>
+                  <p className="text-sm font-medium leading-none">{user.name}</p>
+                  <p className="text-xs leading-none text-zinc-500">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

@@ -82,7 +82,17 @@ authRouter.post('/register', async (req, res) => {
         name: companyName,
         owner_email: email,
         password: hashedPassword,
-        plan_status: 'trial'
+        plan_status: 'trial',
+        first_name: firstName,
+        last_name: lastName,
+        phone: phone,
+        whatsapp: whatsapp,
+        address: address,
+        contact_person: contact,
+        social_object: socialObject,
+        employees_count: employees,
+        product_description: product,
+        chatbot_name: chatbotName
       }])
       .select()
       .single();
@@ -102,7 +112,35 @@ authRouter.post('/register', async (req, res) => {
 
 // GET /api/auth/me - Obter dados do usuário logado
 authRouter.get('/me', requireAuth, async (req, res) => {
+  const { data: user, error } = await getSupabase()
+    .from('organizations')
+    .select('first_name, last_name, owner_email, name, phone, whatsapp, address, social_object, employees_count, product_description, chatbot_name')
+    .eq('id', req.user?.id)
+    .single();
+
+  if (error) {
+    console.error('Supabase /me Error:', error);
+    return res.status(500).json({ error: 'Erro ao buscar dados do usuário.' });
+  }
+
+  if (!user) {
+    return res.status(404).json({ error: 'Usuário não encontrado.' });
+  }
+
   res.json({
-    user: req.user
+    user: {
+      ...req.user,
+      name: user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.name,
+      email: user.owner_email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      phone: user.phone,
+      whatsapp: user.whatsapp,
+      address: user.address,
+      social_object: user.social_object,
+      employees_count: user.employees_count,
+      product_description: user.product_description,
+      chatbot_name: user.chatbot_name,
+    }
   });
 });

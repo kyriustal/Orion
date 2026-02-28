@@ -21,6 +21,24 @@ export default function Simulation() {
     { id: 1, sender: "bot", text: "Olá! Sou o assistente virtual da Orion. Como posso te ajudar hoje?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
   ]);
 
+  const [botName, setBotName] = useState("Orion Bot");
+
+  useEffect(() => {
+    fetch("/api/auth/me", {
+      headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          if (data.user.chatbot_name) setBotName(data.user.chatbot_name);
+          setMessages([
+            { id: 1, sender: "bot", text: `Olá! Sou o ${data.user.chatbot_name || "assistente virtual da Orion"}. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+          ]);
+        }
+      })
+      .catch(err => console.error("Erro ao carregar dados do bot:", err));
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
@@ -84,7 +102,7 @@ export default function Simulation() {
 
   const handleReset = () => {
     setMessages([
-      { id: 1, sender: "bot", text: "Olá! Sou o assistente virtual da Orion. Como posso te ajudar hoje?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+      { id: 1, sender: "bot", text: `Olá! Sou o ${botName}. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
     ]);
   };
 
@@ -107,7 +125,7 @@ export default function Simulation() {
               <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-lg">Orion Bot</CardTitle>
+              <CardTitle className="text-lg">{botName}</CardTitle>
               <CardDescription className="text-emerald-100">Online</CardDescription>
             </div>
           </div>
@@ -117,8 +135,8 @@ export default function Simulation() {
           {messages.map(msg => (
             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[75%] rounded-lg px-3 py-2 shadow-sm relative ${msg.sender === 'user'
-                  ? 'bg-[#d9fdd3] text-zinc-900 rounded-tr-none'
-                  : 'bg-white text-zinc-900 rounded-tl-none'
+                ? 'bg-[#d9fdd3] text-zinc-900 rounded-tr-none'
+                : 'bg-white text-zinc-900 rounded-tl-none'
                 }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                 <div className="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1">
