@@ -84,13 +84,7 @@ authRouter.post('/register', async (req, res) => {
 
     if (error) throw error;
 
-    // Criar configuração inicial do WhatsApp
-    await supabase.from('whatsapp_configs').insert([{
-      org_id: org.id,
-      phone_number_id: '',
-      waba_id: '',
-      access_token: ''
-    }]);
+    // Nota: Configuração do WhatsApp será feita no primeiro acesso à página WhatsApp
 
     res.status(201).json({
       message: 'Conta criada com sucesso. Bem-vindo à Orion!',

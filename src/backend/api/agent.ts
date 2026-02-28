@@ -24,11 +24,11 @@ const transferToHumanDeclaration: FunctionDeclaration = {
 // GET /api/agent/config - Obter prompt e modelo atual
 agentRouter.get('/config', async (req, res) => {
   const orgId = req.user?.org_id;
-  
+
   // TODO: Buscar da tabela whatsapp_configs e subscription_plans
   res.json({
     system_prompt: 'Você é um assistente virtual de vendas. Seja educado e conciso.',
-    ai_model: 'gemini-3-flash-preview',
+    ai_model: 'gemini-1.5-flash',
     temperature: 0.3
   });
 });
@@ -89,7 +89,7 @@ agentRouter.post('/simulate', async (req, res) => {
     }
 
     const chat = ai.chats.create({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       config: {
         systemInstruction: "Você é o Orion Bot, um assistente virtual inteligente da empresa Orion. Você é capaz de conversar naturalmente, responder a dúvidas sobre nossos produtos (SaaS de IA para WhatsApp) e ajudar os clientes. Seja educado, prestativo e conciso. Se o cliente estiver irritado, apresentar um problema sensível ou pedir para falar com um humano, você DEVE usar a ferramenta transferToHuman para transferir o atendimento.",
         temperature: 0.3,
@@ -105,8 +105,8 @@ agentRouter.post('/simulate', async (req, res) => {
       if (call.name === "transferToHuman") {
         const reason = call.args?.reason || "Solicitação do cliente";
         console.log(`[ALERTA SECRETARIA] Transferência solicitada na simulação. Motivo: ${reason}`);
-        return res.json({ 
-          reply: "Compreendo a situação. Estou transferindo o seu atendimento para um de nossos especialistas humanos. Por favor, aguarde um momento enquanto notifico a nossa secretaria.", 
+        return res.json({
+          reply: "Compreendo a situação. Estou transferindo o seu atendimento para um de nossos especialistas humanos. Por favor, aguarde um momento enquanto notifico a nossa secretaria.",
           transfer: true,
           reason: reason
         });

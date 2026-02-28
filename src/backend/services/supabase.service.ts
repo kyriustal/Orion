@@ -6,15 +6,16 @@ export function getSupabase(): SupabaseClient {
   if (!supabaseClient) {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!url || !key) {
-      console.warn('Supabase credentials missing. Using mock for development.');
+      console.error('CRITICAL: Supabase environment variables (URL or KEY) are missing!');
+      console.warn('Backend will use MOCK data. Login will FAIL.');
       // Mock client para evitar crash se as variáveis não estiverem configuradas
       return {
         from: () => ({
           select: () => ({ eq: () => ({ single: () => ({ data: null }), order: () => ({ limit: () => ({ data: [] }) }) }) }),
-          insert: () => ({ select: () => ({ single: () => ({ data: { id: 'mock' } }) }), then: (cb: any) => cb({data: null}) }),
-          update: () => ({ eq: () => ({ then: (cb: any) => cb({data: null}) }) })
+          insert: () => ({ select: () => ({ single: () => ({ data: { id: 'mock' } }) }), then: (cb: any) => cb({ data: null }) }),
+          update: () => ({ eq: () => ({ then: (cb: any) => cb({ data: null }) }) })
         })
       } as any;
     }
@@ -30,7 +31,7 @@ export class SupabaseService {
       .select('*, organizations(subscription_plans(ai_model))')
       .eq('phone_number_id', phoneNumberId)
       .single();
-      
+
     if (error && error.code !== 'PGRST116') console.error('Error fetching config:', error);
     return data;
   }

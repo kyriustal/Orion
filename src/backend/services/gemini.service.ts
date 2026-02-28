@@ -20,7 +20,7 @@ export class GeminiService {
     systemPrompt: string,
     history: { role: string, content: string }[],
     newMessage: string,
-    model: string = 'gemini-3-flash-preview'
+    model: string = 'gemini-1.5-flash'
   ) {
     try {
       const client = getGeminiClient();
