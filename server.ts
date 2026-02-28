@@ -123,7 +123,7 @@ async function startServer() {
           }
 
           const chat = ai.chats.create({
-            model: "gemini-2.5-flash",
+            model: "gemini-1.5-flash",
             config: {
               systemInstruction: `Você é o Orion Bot, um avançado assistente virtual inteligente.
 1. Seja sempre profissional, educado e conciso. Resolva os problemas do cliente de forma proativa.
@@ -227,12 +227,19 @@ ${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada par
     app.use(vite.middlewares);
   } else {
     console.log(`Starting in PRODUCTION mode. Serving from: ${distPath}`);
+    if (!existsSync(path.join(distPath, 'index.html'))) {
+      console.error(`ERROR: index.html NOT FOUND in ${distPath}`);
+    }
     app.use(express.static(distPath));
 
-    // SPA fallback: serve index.html for ALL non-API routes
     app.get('*', (req, res) => {
       if (!req.path.startsWith('/api')) {
-        res.sendFile(path.join(distPath, 'index.html'));
+        const indexHtml = path.join(distPath, 'index.html');
+        if (existsSync(indexHtml)) {
+          res.sendFile(indexHtml);
+        } else {
+          res.status(404).send('Frontend build (index.html) missing in dist folder.');
+        }
       }
     });
   }
