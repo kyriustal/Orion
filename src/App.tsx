@@ -30,6 +30,10 @@ import About from './pages/public/About';
 import Security from './pages/public/Security';
 import Terms from './pages/public/Terms';
 import ApiDocs from './pages/public/ApiDocs';
+import WhatsappIA from './pages/public/WhatsappIA';
+import KnowledgeRAG from './pages/public/KnowledgeRAG';
+import MetaWebhooks from './pages/public/MetaWebhooks';
+import OpenSource from './pages/public/OpenSource';
 
 const GatekeeperLayout = () => {
   return (
@@ -55,6 +59,10 @@ export default function App() {
           <Route path="/seguranca" element={<Security />} />
           <Route path="/termos" element={<Terms />} />
           <Route path="/api-docs" element={<ApiDocs />} />
+          <Route path="/whatsapp-ia" element={<WhatsappIA />} />
+          <Route path="/rag" element={<KnowledgeRAG />} />
+          <Route path="/webhooks" element={<MetaWebhooks />} />
+          <Route path="/open-source" element={<OpenSource />} />
         </Route>
 
         {/* Protected Area (GATEKEEPER REQUIRED) */}

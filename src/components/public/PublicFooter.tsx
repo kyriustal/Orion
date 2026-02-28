@@ -21,8 +21,8 @@ export default function PublicFooter() {
                 <div>
                     <h4 className="font-medium mb-6 text-zinc-900">Produto</h4>
                     <ul className="space-y-4 text-sm text-zinc-500">
-                        <li><Link to="/funcionalidades" className="hover:text-emerald-600 transition-colors flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Whatsapp IA</Link></li>
-                        <li><Link to="/funcionalidades" className="hover:text-emerald-600 transition-colors flex items-center gap-2"><Bot className="w-4 h-4" /> Base de Conhecimento RAG</Link></li>
+                        <li><Link to="/whatsapp-ia" className="hover:text-emerald-600 transition-colors flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Whatsapp IA</Link></li>
+                        <li><Link to="/rag" className="hover:text-emerald-600 transition-colors flex items-center gap-2"><Bot className="w-4 h-4" /> Base de Conhecimento RAG</Link></li>
                         <li><Link to="/integracoes" className="hover:text-emerald-600 transition-colors flex items-center gap-2"><Zap className="w-4 h-4" /> Integrações</Link></li>
                         <li><Link to="/precos" className="hover:text-emerald-600 transition-colors">Preços</Link></li>
                     </ul>
@@ -32,9 +32,9 @@ export default function PublicFooter() {
                     <h4 className="font-medium mb-6 text-zinc-900">Desenvolvedores</h4>
                     <ul className="space-y-4 text-sm text-zinc-500">
                         <li><Link to="/api-docs" className="hover:text-emerald-600 transition-colors">Documentação da API</Link></li>
-                        <li><Link to="/api-docs" className="hover:text-emerald-600 transition-colors">Webhooks Meta</Link></li>
+                        <li><Link to="/webhooks" className="hover:text-emerald-600 transition-colors">Webhooks Meta</Link></li>
                         <li><Link to="/casos-de-uso" className="hover:text-emerald-600 transition-colors">Casos de Uso</Link></li>
-                        <li><a href="#" className="hover:text-emerald-600 transition-colors">GitHub Open Source</a></li>
+                        <li><Link to="/open-source" className="hover:text-emerald-600 transition-colors">GitHub Open Source</Link></li>
                     </ul>
                 </div>
 

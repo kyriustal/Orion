@@ -53,7 +53,7 @@ export default function Home() {
                   Quais são as regras de Frete Grátis da empresa?
                 </div>
                 <div className="bg-zinc-100 px-4 py-3 rounded-2xl rounded-tl-none w-[90%]">
-                  Verifiquei nos nossos manuais que o Frete Grátis aplica-se automaticamente para compras acima de R$ 200,00 para as regiões Sul e Sudeste. Posso calcular seu carrinho?
+                  O Frete Grátis para fora de Luanda aplica-se automaticamente para compras acima de 30.000 kZ. Posso calcular seu carrinho?
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-zinc-100 text-center text-sm text-zinc-400">
