@@ -17,9 +17,7 @@ export default function Simulation() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, sender: "bot", text: "Olá! Sou o assistente virtual da Orion. Como posso te ajudar hoje?", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const [botName, setBotName] = useState("Orion Bot");
 

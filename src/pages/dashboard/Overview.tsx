@@ -16,9 +16,9 @@ export default function Overview() {
             <MessageSquare className="h-4 w-4 text-zinc-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,248</div>
-            <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
-              <TrendingUp className="h-3 w-3" /> +12% em relação a ontem
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-zinc-500 mt-1">
+              Aguardando as primeiras interações
             </p>
           </CardContent>
         </Card>
@@ -28,9 +28,9 @@ export default function Overview() {
             <Users className="h-4 w-4 text-zinc-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">142</div>
-            <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1">
-              <TrendingUp className="h-3 w-3" /> +5% em relação a ontem
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-zinc-500 mt-1">
+              Nenhum chat iniciado hoje
             </p>
           </CardContent>
         </Card>
@@ -40,9 +40,9 @@ export default function Overview() {
             <BotIcon className="h-4 w-4 text-zinc-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">89%</div>
+            <div className="text-2xl font-bold">---</div>
             <p className="text-xs text-zinc-500 mt-1">
-              11% transferidos para humanos
+              Aguardando dados de simulação
             </p>
           </CardContent>
         </Card>

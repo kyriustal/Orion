@@ -16,9 +16,9 @@ export default function Insights() {
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">68%</div>
+            <div className="text-2xl font-bold text-zinc-400">---</div>
             <p className="text-xs text-zinc-500 mt-1">
-              "Ótimo atendimento", "Obrigado!"
+              Aguardando interações reais
             </p>
           </CardContent>
         </Card>
@@ -28,9 +28,9 @@ export default function Insights() {
             <Minus className="h-4 w-4 text-zinc-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-zinc-700">25%</div>
+            <div className="text-2xl font-bold text-zinc-400">---</div>
             <p className="text-xs text-zinc-500 mt-1">
-              Dúvidas gerais, navegação.
+              Frequência de interações neutras
             </p>
           </CardContent>
         </Card>
@@ -40,33 +40,26 @@ export default function Insights() {
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">7%</div>
+            <div className="text-2xl font-bold text-zinc-400">---</div>
             <p className="text-xs text-zinc-500 mt-1">
-              "Quero falar com humano", "Não entendi"
+              Monitoramento de frustração
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-amber-200 bg-amber-50">
+      <Card className="border-zinc-200 bg-zinc-50/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-800">
-            <AlertTriangle className="w-5 h-5" /> Alerta de Detratores
+          <CardTitle className="flex items-center gap-2 text-zinc-500">
+            <BarChart className="w-5 h-5" /> Análise de Detratores
           </CardTitle>
-          <CardDescription className="text-amber-700">
-            A IA detectou 3 clientes frustrados na última hora. Recomendamos intervenção humana.
+          <CardDescription className="text-zinc-500">
+            A IA monitorará conversas com sentimento negativo para alertar você nestas situações.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-3 bg-white rounded-md border border-amber-100">
-              <span className="text-sm font-medium text-zinc-900">+55 11 9999-8888</span>
-              <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">FRUSTRATED</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-white rounded-md border border-amber-100">
-              <span className="text-sm font-medium text-zinc-900">+55 21 7777-6666</span>
-              <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">FRUSTRATED</span>
-            </div>
+          <div className="text-center py-6 text-sm text-zinc-400 border-2 border-dashed rounded-lg">
+            Nenhum alerta crítico no momento.
           </div>
         </CardContent>
       </Card>

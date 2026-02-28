@@ -91,8 +91,17 @@ agentRouter.post('/simulate', async (req, res) => {
     const chat = ai.chats.create({
       model: "gemini-1.5-flash",
       config: {
-        systemInstruction: "Você é o Orion Bot, um assistente virtual inteligente da empresa Orion. Você é capaz de conversar naturalmente, responder a dúvidas sobre nossos produtos (SaaS de IA para WhatsApp) e ajudar os clientes. Seja educado, prestativo e conciso. Se o cliente estiver irritado, apresentar um problema sensível ou pedir para falar com um humano, você DEVE usar a ferramenta transferToHuman para transferir o atendimento.",
-        temperature: 0.3,
+        systemInstruction: `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
+DIRETRIZES FUNDAMENTAIS:
+1. TEXTO LIMPO: Jamais use ruídos, símbolos repetitivos ou caracteres desnecessários. Suas respostas devem ser esteticamente organizadas.
+2. ESTRUTURA: Use Markdowns. *Negrito* para pontos importantes e listas para organização.
+3. ESTILO: Responda de forma direta e humana. Evite introduções longas.
+4. CONTEXTO ANGOLA: Atuamos com foco no mercado de Angola. A moeda é Kwanza (Kz). 
+   - REGRA DE FRETE: O Frete Grátis para fora de Luanda aplica-se automaticamente para compras acima de 30.000 Kz.
+5. FERRAMENTA transferToHuman: Acione IMEDIATAMENTE se o cliente pedir falar com um humano acompanhado de um motivo válido.
+
+Se o cliente estiver irritado, apresentar um problema sensível ou pedir para falar com um humano, você DEVE usar a ferramenta transferToHuman para transferir o atendimento.`,
+        temperature: 0.1,
         tools: [{ functionDeclarations: [transferToHumanDeclaration] }]
       },
       history: cleanHistory
@@ -116,6 +125,10 @@ agentRouter.post('/simulate', async (req, res) => {
     res.json({ reply: response.text });
   } catch (error: any) {
     console.error("Erro na simulação do Gemini:", error);
-    res.status(500).json({ error: "Erro ao processar a mensagem com a IA." });
+    res.status(500).json({
+      error: "Erro ao processar a mensagem com a IA.",
+      details: error.message,
+      code: error.status || "GEMINI_ERROR"
+    });
   }
 });

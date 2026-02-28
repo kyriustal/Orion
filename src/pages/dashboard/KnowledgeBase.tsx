@@ -7,11 +7,8 @@ import { toast } from "sonner";
 export default function KnowledgeBase() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [files, setFiles] = useState([
-    { id: "1", name: "catalogo_produtos_2024.pdf", size: "2.4 MB", status: "ready" },
-    { id: "2", name: "politica_trocas.txt", size: "15 KB", status: "ready" },
-  ]);
+
+  const [files, setFiles] = useState<any[]>([]);
 
   const handleUploadClick = () => {
     if (fileInputRef.current) {
@@ -30,11 +27,11 @@ export default function KnowledgeBase() {
     }
 
     setIsUploading(true);
-    
+
     // Create a temporary file entry in the UI
     const tempId = Date.now().toString();
     const fileSizeStr = (file.size / (1024 * 1024)).toFixed(2) + " MB";
-    
+
     setFiles(prev => [
       { id: tempId, name: file.name, size: fileSizeStr, status: "processing" },
       ...prev
@@ -58,22 +55,22 @@ export default function KnowledgeBase() {
       }
 
       const data = await response.json();
-      
+
       // Update the temporary file with the real data
-      setFiles(prev => prev.map(f => 
+      setFiles(prev => prev.map(f =>
         f.id === tempId ? { ...f, id: data.file.id, status: data.file.status } : f
       ));
-      
+
       toast.success(data.message);
-      
+
       // If the backend returns 'processing', simulate it finishing after a few seconds
       if (data.file.status === 'processing') {
         setTimeout(() => {
           setFiles(prev => prev.map(f => f.id === data.file.id ? { ...f, status: 'ready' } : f));
         }, 3000);
       } else {
-         // Force ready status for UI demonstration if backend returns ready immediately
-         setFiles(prev => prev.map(f => f.id === data.file.id ? { ...f, status: 'ready' } : f));
+        // Force ready status for UI demonstration if backend returns ready immediately
+        setFiles(prev => prev.map(f => f.id === data.file.id ? { ...f, status: 'ready' } : f));
       }
 
     } catch (error: any) {
@@ -103,14 +100,14 @@ export default function KnowledgeBase() {
           <CardDescription>Arraste arquivos PDF, DOCX, TXT, PNG, JPG ou CSV para treinar seu agente.</CardDescription>
         </CardHeader>
         <CardContent>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            className="hidden" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
             accept=".pdf,.txt,.docx,.png,.jpg,.jpeg,.csv,.xlsx,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword"
           />
-          <div 
+          <div
             onClick={handleUploadClick}
             className="border-2 border-dashed border-zinc-200 rounded-xl p-12 flex flex-col items-center justify-center text-center hover:bg-zinc-50 transition-colors cursor-pointer"
           >
@@ -130,30 +127,36 @@ export default function KnowledgeBase() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {files.map(file => (
-              <div key={file.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 bg-white">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-zinc-500" />
+            {files.length === 0 ? (
+              <div className="text-center py-10 border-2 border-dashed rounded-xl bg-zinc-50/50">
+                <p className="text-zinc-500 text-sm">Nenhum documento cadastrado na base de conhecimento.</p>
+              </div>
+            ) : (
+              files.map(file => (
+                <div key={file.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 bg-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-zinc-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">{file.name}</p>
+                      <p className="text-xs text-zinc-500">{file.size}</p>
+                    </div>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-zinc-900">{file.name}</p>
-                    <p className="text-xs text-zinc-500">{file.size}</p>
+                    {file.status === 'ready' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Pronto
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processando (Gerando Embeddings)
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div>
-                  {file.status === 'ready' ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Pronto
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processando (Gerando Embeddings)
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
