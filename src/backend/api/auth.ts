@@ -5,7 +5,7 @@ import { getSupabase } from '../services/supabase.service';
 import { requireAuth } from '../middleware/auth.middleware';
 
 export const authRouter = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'orion_fallback_secret_321';
+import { JWT_SECRET } from '../config/jwt';
 
 // POST /api/auth/login - Autenticação do usuário
 authRouter.post('/login', async (req, res) => {

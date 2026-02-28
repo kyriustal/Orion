@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'orion_fallback_secret_321';
+import { JWT_SECRET } from '../config/jwt';
 
 // Estendendo o Request do Express para incluir o usuário autenticado
 declare global {
@@ -35,7 +35,12 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
       email: decoded.email
     };
     return next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Token inválido ou expirado.' });
+  } catch (err: any) {
+    console.error('JWT AUTH ERROR:', err.message);
+    return res.status(401).json({
+      error: 'Token inválido ou expirado.',
+      details: err.message,
+      code: err.name // ex: TokenExpiredError, JsonWebTokenError
+    });
   }
 };
