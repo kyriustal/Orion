@@ -29,17 +29,15 @@ type NewNumberFormValues = z.infer<typeof newNumberSchema>;
 export default function WhatsAppConfig() {
   const [webhookUrl] = useState("https://seu-dominio.com/api/webhook");
   const [verifyToken] = useState("seu_token_de_verificacao_seguro");
-  
+
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
-  
+
   useEffect(() => {
     const saved = localStorage.getItem('whatsapp_numbers');
     if (saved) {
       setNumbers(JSON.parse(saved));
     } else {
-      const initial = [{ id: '1', phone: '+55 11 99999-9999', phoneId: '1029384756', wabaId: '9876543210', status: 'connected' as const }];
-      setNumbers(initial);
-      localStorage.setItem('whatsapp_numbers', JSON.stringify(initial));
+      setNumbers([]);
     }
   }, []);
 
@@ -48,10 +46,10 @@ export default function WhatsAppConfig() {
       localStorage.setItem('whatsapp_numbers', JSON.stringify(numbers));
     }
   }, [numbers]);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -107,11 +105,11 @@ export default function WhatsAppConfig() {
       setIsModalOpen(false);
       reset();
       toast.success("Número conectado com sucesso!");
-      
+
       // Automatically sync webhooks after adding a new number
       toast.info("Sincronizando dados com a Meta...");
       await handleSyncWebhooks();
-      
+
     } catch (error) {
       toast.error("Erro ao conectar número.");
     } finally {
@@ -158,12 +156,11 @@ export default function WhatsAppConfig() {
             numbers.map((num) => (
               <div key={num.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-zinc-200 bg-zinc-50 gap-4">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    num.status === 'testing' ? 'bg-amber-100 text-amber-600' : 
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${num.status === 'testing' ? 'bg-amber-100 text-amber-600' :
                     num.status === 'error' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
-                  }`}>
-                    {num.status === 'testing' ? <RefreshCw className="w-5 h-5 animate-spin" /> : 
-                     num.status === 'error' ? <AlertCircle className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
+                    }`}>
+                    {num.status === 'testing' ? <RefreshCw className="w-5 h-5 animate-spin" /> :
+                      num.status === 'error' ? <AlertCircle className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
                   </div>
                   <div>
                     <p className="font-semibold text-zinc-900">{num.phone}</p>
@@ -180,9 +177,9 @@ export default function WhatsAppConfig() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleTestConnection(num.id)}
                     disabled={num.status === 'testing'}
                     className="bg-white"
@@ -190,9 +187,9 @@ export default function WhatsAppConfig() {
                     <RefreshCw className={`w-4 h-4 mr-2 ${num.status === 'testing' ? 'animate-spin' : ''}`} />
                     Testar
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleDisconnect(num.id)}
                     disabled={num.status === 'testing'}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white"
@@ -247,9 +244,9 @@ export default function WhatsAppConfig() {
                 <p className="text-sm font-medium text-zinc-900">Mensagens (messages)</p>
                 <p className="text-xs text-zinc-500">Obrigatório para o bot receber e responder clientes.</p>
               </div>
-              <Switch 
-                checked={subscriptions.messages} 
-                onCheckedChange={(checked) => setSubscriptions({...subscriptions, messages: checked})} 
+              <Switch
+                checked={subscriptions.messages}
+                onCheckedChange={(checked) => setSubscriptions({ ...subscriptions, messages: checked })}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -257,9 +254,9 @@ export default function WhatsAppConfig() {
                 <p className="text-sm font-medium text-zinc-900">Status (statuses)</p>
                 <p className="text-xs text-zinc-500">Confirmações de envio, entrega e leitura (ticks).</p>
               </div>
-              <Switch 
-                checked={subscriptions.statuses} 
-                onCheckedChange={(checked) => setSubscriptions({...subscriptions, statuses: checked})} 
+              <Switch
+                checked={subscriptions.statuses}
+                onCheckedChange={(checked) => setSubscriptions({ ...subscriptions, statuses: checked })}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -267,9 +264,9 @@ export default function WhatsAppConfig() {
                 <p className="text-sm font-medium text-zinc-900">Templates</p>
                 <p className="text-xs text-zinc-500">Atualizações de aprovação/rejeição de templates.</p>
               </div>
-              <Switch 
-                checked={subscriptions.message_template_status_update} 
-                onCheckedChange={(checked) => setSubscriptions({...subscriptions, message_template_status_update: checked})} 
+              <Switch
+                checked={subscriptions.message_template_status_update}
+                onCheckedChange={(checked) => setSubscriptions({ ...subscriptions, message_template_status_update: checked })}
               />
             </div>
           </CardContent>
@@ -296,7 +293,7 @@ export default function WhatsAppConfig() {
                   <label className="text-sm font-medium text-zinc-700">Número de Exibição</label>
                   <div className="relative">
                     <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                    <Input {...register("phone")} className="pl-9" placeholder="+55 11 99999-9999" />
+                    <Input {...register("phone")} className="pl-9" placeholder="+244 9XX XXX XXX" />
                   </div>
                   {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
                 </div>

@@ -29,7 +29,7 @@ export default function ApiDocs() {
                         <p className="text-zinc-600 mb-6">Todas as chamadas que não utilizam o Painel de Controle oficial via React exigem um Cabeçalho HTTPS com sua `Authorization: Bearer ORION_SECRET`.</p>
                         <div className="bg-[#1e1e1e] rounded-xl p-6 text-emerald-400 font-mono text-sm overflow-x-auto shadow-xl">
                             <pre>
-                                {`curl -X GET 'https://api.orion-agents.com/v1/sessions' \\
+                                {`curl -X GET 'https://api.orionboot.com/v1/sessions' \\
 -H 'Authorization: Bearer orion_sec_3kdas934...'`}
                             </pre>
                         </div>

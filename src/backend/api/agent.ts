@@ -4,8 +4,8 @@ import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 export const agentRouter = Router();
 
 // Initialize Gemini API with the provided key
-const apiKey = process.env.GEMINI_API_KEY || "";
-console.log(`[GEMINI INIT] API key status: ${apiKey ? `present (starts with ${apiKey.substring(0, 5)}...)` : 'MISSING - GEMINI_API_KEY not set!'}`);
+const apiKey = (process.env.GEMINI_API_KEY || "AIzaSyAwIN4X0wQkNQi8BdIyRfQ_FCgY1JmFzoM").trim();
+console.log(`[GEMINI INIT] API key status: ${apiKey ? `present (starts with ${apiKey.substring(0, 5)}...)` : 'MISSING'}`);
 const ai = new GoogleGenAI({ apiKey });
 
 const transferToHumanDeclaration: FunctionDeclaration = {
