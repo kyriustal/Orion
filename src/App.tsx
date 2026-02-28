@@ -1,3 +1,15 @@
+import React from "react";
+
+export default function App() {
+  return (
+    <div id="app" className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold">Orion — Placeholder</h1>
+        <p className="text-zinc-600 mt-4">Aplicação restaurada — substitua este componente pelo seu App real.</p>
+      </div>
+    </div>
+  );
+}
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import DashboardLayout from './layouts/DashboardLayout';
