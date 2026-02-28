@@ -19,7 +19,12 @@ authRouter.post('/login', async (req, res) => {
       .eq('owner_email', email)
       .single();
 
-    if (error || !org) {
+    if (error) {
+      console.error('Supabase Login Error:', error);
+      return res.status(500).json({ error: 'Erro de conexão com o banco de dados. Verifique os logs do servidor.' });
+    }
+
+    if (!org) {
       return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
     }
 
