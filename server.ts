@@ -14,6 +14,8 @@ import { subscriptionsRouter } from "./src/backend/api/subscriptions";
 import { knowledgeRouter } from "./src/backend/api/knowledge";
 import { billingRouter } from "./src/backend/api/billing";
 import { settingsRouter } from "./src/backend/api/settings";
+import { teamRouter } from "./src/backend/api/team";
+import { templatesRouter } from "./src/backend/api/templates";
 import { requireAuth } from "./src/backend/middleware/auth.middleware";
 import { getSupabase } from "./src/backend/services/supabase.service";
 import path from "path";
@@ -199,6 +201,9 @@ ${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada par
   app.use("/api/automations", requireAuth, automationsRouter);
   app.use("/api/subscriptions", requireAuth, subscriptionsRouter);
   app.use("/api/knowledge", requireAuth, knowledgeRouter);
+  app.use("/api/team", requireAuth, teamRouter);
+  app.use("/api/templates", requireAuth, templatesRouter);
+  app.use("/api/settings", requireAuth, settingsRouter);
 
   // Middleware de Log para ajudar no Debugging de produção
   app.use((req, _res, next) => {

@@ -34,9 +34,9 @@ export default function DashboardLayout() {
 
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-zinc-200 z-40 relative">
-        <div className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <img src="/Orion.png" alt="Orion Logo" className="h-6 w-auto" />
-        </div>
+        </Link>
         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -mr-2">
           <Menu className="w-6 h-6 text-zinc-900" />
         </button>
@@ -63,8 +63,8 @@ export default function DashboardLayout() {
                   to={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center gap-4 px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive
-                      ? 'bg-emerald-500/10 text-emerald-400'
-                      : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                    ? 'bg-emerald-500/10 text-emerald-400'
+                    : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
                     }`}
                 >
                   <item.icon className={`w-6 h-6 ${isActive ? 'text-emerald-400' : 'text-zinc-400'}`} />
@@ -96,7 +96,9 @@ export default function DashboardLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-white border-r border-zinc-200 flex-col">
         <div className="p-6 border-b border-zinc-200">
-          <img src="/Orion.png" alt="Orion Logo" className="h-8 w-auto" />
+          <Link to="/dashboard">
+            <img src="/Orion.png" alt="Orion Logo" className="h-8 w-auto" />
+          </Link>
         </div>
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {navItems.map((item) => {
@@ -106,8 +108,8 @@ export default function DashboardLayout() {
                 key={item.name}
                 to={item.path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
                   }`}
               >
                 <item.icon className={`w-5 h-5 ${isActive ? 'text-emerald-600' : 'text-zinc-400'}`} />
