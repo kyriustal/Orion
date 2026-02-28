@@ -1,4 +1,4 @@
--- Script de Configuração Inicial do Banco de Dados Supabase (Orion 2)
+-- Script de Configuração Completa do Banco de Dados Supabase (Orion 2)
 -- Rode este script no "SQL Editor" do seu painel do Supabase.
 
 -- 1. Criação da Tabela de Organizações (Inquilinos/Empresas)
@@ -12,7 +12,18 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     use_emojis BOOLEAN DEFAULT TRUE,
     password TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    -- Colunas de Perfil Consolidadas
+    first_name TEXT,
+    last_name TEXT,
+    phone TEXT,
+    whatsapp TEXT,
+    address TEXT,
+    contact_person TEXT,
+    social_object TEXT,
+    employees_count TEXT,
+    product_description TEXT,
+    chatbot_name TEXT
 );
 
 -- 2. Criação da Tabela de Configurações do WhatsApp Meta
@@ -59,19 +70,48 @@ CREATE TABLE IF NOT EXISTS public.messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Habilitar RLS (Row Level Security) opcional, mas seguro
+-- 6. Tabela de Membros da Equipe
+CREATE TABLE IF NOT EXISTS public.team_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    role TEXT DEFAULT 'agent', -- 'admin', 'agent', 'viewer'
+    password TEXT NOT NULL, -- Senha com hash bcrypt
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 7. Tabela de Templates (HSM)
+CREATE TABLE IF NOT EXISTS public.whatsapp_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    language TEXT DEFAULT 'pt_BR',
+    status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar RLS (Row Level Security)
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.whatsapp_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.knowledge_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.whatsapp_templates ENABLE ROW LEVEL SECURITY;
 
--- Políticas de acesso liberais para Service Role (O Backend Express do Orion acessará sem limite)
+-- Políticas de acesso liberais para Service Role
 CREATE POLICY "Enable all for service role" ON public.organizations FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.whatsapp_configs FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.knowledge_documents FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.chat_sessions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.messages FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for service role" ON public.team_members FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for service role" ON public.whatsapp_templates FOR ALL USING (true) WITH CHECK (true);
 
--- Criar Organização Padrão para Testes e amarrar na nova estrutura
-INSERT INTO public.organizations (id, name) VALUES ('00000000-0000-0000-0000-000000000000', 'Orion Master Demo') ON CONFLICT DO NOTHING;
+-- Criar Organização Padrão para Testes
+INSERT INTO public.organizations (id, name, owner_email) 
+VALUES ('00000000-0000-0000-0000-000000000000', 'Orion Master Demo', 'demo@orion.com') 
+ON CONFLICT DO NOTHING;
