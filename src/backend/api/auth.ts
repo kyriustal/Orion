@@ -20,6 +20,9 @@ authRouter.post('/login', async (req, res) => {
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(401).json({ error: 'E-mail ou senha incorretos.' });
+      }
       console.error('Supabase Login Error:', error);
       return res.status(500).json({
         error: 'Erro de conexão com o banco de dados.',
