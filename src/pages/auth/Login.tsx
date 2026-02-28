@@ -26,7 +26,8 @@ export default function Login() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Erro ao fazer login");
+        const fullMessage = error.details ? `${error.error} Detalhes: ${error.details} [${error.code || 'sem-codigo'}]` : (error.error || "Erro ao fazer login");
+        throw new Error(fullMessage);
       }
 
       const data = await response.json();
