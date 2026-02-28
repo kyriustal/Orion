@@ -1,0 +1,343 @@
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/src/components/ui/card";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Switch } from "@/src/components/ui/switch";
+import { Smartphone, Copy, AlertCircle, Plus, Loader2, Trash2, RefreshCw, CheckCircle2, Key, Building, Webhook } from "lucide-react";
+
+type WhatsAppNumber = {
+  id: string;
+  phone: string;
+  phoneId: string;
+  wabaId: string;
+  status: 'connected' | 'testing' | 'error';
+};
+
+const newNumberSchema = z.object({
+  phone: z.string().min(8, "Número inválido"),
+  phoneId: z.string().min(5, "ID inválido"),
+  wabaId: z.string().min(5, "WABA ID inválido"),
+  token: z.string().min(10, "Token inválido"),
+});
+
+type NewNumberFormValues = z.infer<typeof newNumberSchema>;
+
+export default function WhatsAppConfig() {
+  const [webhookUrl] = useState("https://seu-dominio.com/api/webhook");
+  const [verifyToken] = useState("seu_token_de_verificacao_seguro");
+  
+  const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('whatsapp_numbers');
+    if (saved) {
+      setNumbers(JSON.parse(saved));
+    } else {
+      const initial = [{ id: '1', phone: '+55 11 99999-9999', phoneId: '1029384756', wabaId: '9876543210', status: 'connected' as const }];
+      setNumbers(initial);
+      localStorage.setItem('whatsapp_numbers', JSON.stringify(initial));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (numbers.length > 0) {
+      localStorage.setItem('whatsapp_numbers', JSON.stringify(numbers));
+    }
+  }, [numbers]);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<NewNumberFormValues>({
+    resolver: zodResolver(newNumberSchema),
+  });
+
+  // Webhook Subscriptions State
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [subscriptions, setSubscriptions] = useState({
+    messages: true,
+    statuses: false,
+    message_template_status_update: false
+  });
+
+  const handleTestConnection = async (id: string) => {
+    setNumbers(prev => prev.map(n => n.id === id ? { ...n, status: 'testing' } : n));
+    try {
+      // Simulating API call: POST /whatsapp/verify-connection
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setNumbers(prev => prev.map(n => n.id === id ? { ...n, status: 'connected' } : n));
+      toast.success("Conexão verificada com sucesso!");
+    } catch (error) {
+      setNumbers(prev => prev.map(n => n.id === id ? { ...n, status: 'error' } : n));
+      toast.error("Erro ao verificar conexão.");
+    }
+  };
+
+  const handleDisconnect = (id: string) => {
+    if (window.confirm("Tem certeza que deseja desconectar este número? A IA parará de responder imediatamente.")) {
+      const newNumbers = numbers.filter(n => n.id !== id);
+      setNumbers(newNumbers);
+      localStorage.setItem('whatsapp_numbers', JSON.stringify(newNumbers));
+      toast.info("Número desconectado.");
+    }
+  };
+
+  const onSubmitNewNumber = async (data: NewNumberFormValues) => {
+    setIsSubmitting(true);
+    try {
+      // Simulating API call: POST /whatsapp/config
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const newEntry: WhatsAppNumber = {
+        id: Date.now().toString(),
+        phone: data.phone,
+        phoneId: data.phoneId,
+        wabaId: data.wabaId,
+        status: 'connected'
+      };
+      setNumbers([...numbers, newEntry]);
+      setIsModalOpen(false);
+      reset();
+      toast.success("Número conectado com sucesso!");
+      
+      // Automatically sync webhooks after adding a new number
+      toast.info("Sincronizando dados com a Meta...");
+      await handleSyncWebhooks();
+      
+    } catch (error) {
+      toast.error("Erro ao conectar número.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSyncWebhooks = async () => {
+    setIsSyncing(true);
+    try {
+      // Simulating API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success("Inscrições do Webhook sincronizadas com a Meta com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao sincronizar webhooks.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copiado para a área de transferência!");
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Gestão de WhatsApp</h2>
+        <p className="text-zinc-500">Conecte sua conta do WhatsApp Business via Meta Cloud API.</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Smartphone className="w-5 h-5" /> Números Conectados</CardTitle>
+          <CardDescription>Gerencie os números que estão utilizando o Agente de IA.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {numbers.length === 0 ? (
+            <div className="text-center py-8 text-zinc-500 border-2 border-dashed border-zinc-200 rounded-xl">
+              Nenhum número conectado no momento.
+            </div>
+          ) : (
+            numbers.map((num) => (
+              <div key={num.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-zinc-200 bg-zinc-50 gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                    num.status === 'testing' ? 'bg-amber-100 text-amber-600' : 
+                    num.status === 'error' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                  }`}>
+                    {num.status === 'testing' ? <RefreshCw className="w-5 h-5 animate-spin" /> : 
+                     num.status === 'error' ? <AlertCircle className="w-5 h-5" /> : <Smartphone className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-zinc-900">{num.phone}</p>
+                    <div className="flex items-center gap-1.5 text-xs font-medium mt-0.5">
+                      {num.status === 'testing' ? (
+                        <span className="text-amber-600 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Testando conexão...</span>
+                      ) : num.status === 'error' ? (
+                        <span className="text-red-600 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Erro de conexão</span>
+                      ) : (
+                        <span className="text-emerald-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Conectado e Ativo</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-zinc-400 mt-1 font-mono">ID: {num.phoneId}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleTestConnection(num.id)}
+                    disabled={num.status === 'testing'}
+                    className="bg-white"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${num.status === 'testing' ? 'animate-spin' : ''}`} />
+                    Testar
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleDisconnect(num.id)}
+                    disabled={num.status === 'testing'}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Desconectar
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+        <CardFooter className="bg-zinc-50 border-t border-zinc-200 py-4">
+          <Button onClick={() => setIsModalOpen(true)} className="ml-auto gap-2">
+            <Plus className="w-4 h-4" /> Adicionar Novo Número
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Credenciais do Webhook</CardTitle>
+            <CardDescription>Configure estas URLs no painel da Meta.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-700">URL de Retorno (Callback URL)</label>
+              <div className="flex gap-2">
+                <Input value={webhookUrl} readOnly className="bg-zinc-50 text-zinc-600 font-mono text-sm" />
+                <Button variant="outline" size="icon" onClick={() => copyToClipboard(webhookUrl)} title="Copiar"><Copy className="w-4 h-4" /></Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-700">Token de Verificação</label>
+              <div className="flex gap-2">
+                <Input value={verifyToken} readOnly className="bg-zinc-50 text-zinc-600 font-mono text-sm" />
+                <Button variant="outline" size="icon" onClick={() => copyToClipboard(verifyToken)} title="Copiar"><Copy className="w-4 h-4" /></Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Webhook className="w-5 h-5" /> Gerenciar Eventos</CardTitle>
+            <CardDescription>Assine os campos para receber notificações da Meta.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Mensagens (messages)</p>
+                <p className="text-xs text-zinc-500">Obrigatório para o bot receber e responder clientes.</p>
+              </div>
+              <Switch 
+                checked={subscriptions.messages} 
+                onCheckedChange={(checked) => setSubscriptions({...subscriptions, messages: checked})} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Status (statuses)</p>
+                <p className="text-xs text-zinc-500">Confirmações de envio, entrega e leitura (ticks).</p>
+              </div>
+              <Switch 
+                checked={subscriptions.statuses} 
+                onCheckedChange={(checked) => setSubscriptions({...subscriptions, statuses: checked})} 
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Templates</p>
+                <p className="text-xs text-zinc-500">Atualizações de aprovação/rejeição de templates.</p>
+              </div>
+              <Switch 
+                checked={subscriptions.message_template_status_update} 
+                onCheckedChange={(checked) => setSubscriptions({...subscriptions, message_template_status_update: checked})} 
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="bg-zinc-50 border-t border-zinc-200 py-4">
+            <Button onClick={handleSyncWebhooks} disabled={isSyncing || numbers.length === 0} className="w-full gap-2">
+              {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Sincronizar com a Meta
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      {/* Modal de Adicionar Número */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-zinc-950/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <form onSubmit={handleSubmit(onSubmitNewNumber)}>
+              <CardHeader>
+                <CardTitle>Conectar Novo Número</CardTitle>
+                <CardDescription>Insira as credenciais fornecidas pelo painel da Meta for Developers.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700">Número de Exibição</label>
+                  <div className="relative">
+                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input {...register("phone")} className="pl-9" placeholder="+55 11 99999-9999" />
+                  </div>
+                  {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700">Phone Number ID</label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input {...register("phoneId")} className="pl-9" placeholder="Ex: 1029384756" />
+                  </div>
+                  {errors.phoneId && <p className="text-xs text-red-500">{errors.phoneId.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700">WhatsApp Business Account ID (WABA)</label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input {...register("wabaId")} className="pl-9" placeholder="Ex: 9876543210" />
+                  </div>
+                  {errors.wabaId && <p className="text-xs text-red-500">{errors.wabaId.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-700">Access Token Permanente</label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input type="password" {...register("token")} className="pl-9" placeholder="EAA..." />
+                  </div>
+                  {errors.token && <p className="text-xs text-red-500">{errors.token.message}</p>}
+                  <p className="text-xs text-zinc-500">Gere um token permanente criando um usuário de sistema no Business Manager.</p>
+                </div>
+              </CardContent>
+              <CardFooter className="bg-zinc-50 border-t border-zinc-200 py-4 flex justify-end gap-2 rounded-b-xl">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="min-w-[120px]">
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Conectar Número'}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
