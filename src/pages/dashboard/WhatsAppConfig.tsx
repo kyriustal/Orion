@@ -33,19 +33,42 @@ export default function WhatsAppConfig() {
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('whatsapp_numbers');
-    if (saved) {
-      setNumbers(JSON.parse(saved));
-    } else {
-      setNumbers([]);
-    }
-  }, []);
+    const fetchConfig = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-  useEffect(() => {
-    if (numbers.length > 0) {
-      localStorage.setItem('whatsapp_numbers', JSON.stringify(numbers));
-    }
-  }, [numbers]);
+        const response = await fetch("/api/whatsapp/config", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch WhatsApp config");
+        }
+
+        const data = await response.json();
+
+        // If there's an active waba_id, show it in the UI as a connected number card
+        if (data && data.phone_number_id && data.waba_id) {
+          setNumbers([{
+            id: '1',
+            phone: 'Conta do WhatsApp Business', // Default label since API doesn't store actual phone number string yet
+            phoneId: data.phone_number_id,
+            wabaId: data.waba_id,
+            status: data.is_active ? 'connected' : 'error'
+          }]);
+        } else {
+          setNumbers([]);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar configurações do WhatsApp:", error);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,33 +103,57 @@ export default function WhatsAppConfig() {
     }
   };
 
-  const handleDisconnect = (id: string) => {
+  const handleDisconnect = async (id: string) => {
     if (window.confirm("Tem certeza que deseja desconectar este número? A IA parará de responder imediatamente.")) {
-      const newNumbers = numbers.filter(n => n.id !== id);
-      setNumbers(newNumbers);
-      localStorage.setItem('whatsapp_numbers', JSON.stringify(newNumbers));
-      toast.info("Número desconectado.");
+      try {
+        const token = localStorage.getItem("token");
+        await fetch("/api/whatsapp/config", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ phone_number_id: '', waba_id: '', access_token: '' })
+        });
+        setNumbers([]);
+        toast.info("Número desconectado.");
+      } catch (error) {
+        toast.error("Erro ao desconectar número.");
+      }
     }
   };
 
   const onSubmitNewNumber = async (data: NewNumberFormValues) => {
     setIsSubmitting(true);
     try {
-      // Simulating API call: POST /whatsapp/config
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/whatsapp/config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          phone_number_id: data.phoneId,
+          waba_id: data.wabaId,
+          access_token: data.token
+        })
+      });
+
+      if (!response.ok) throw new Error("Falha ao salvar config");
+
       const newEntry: WhatsAppNumber = {
-        id: Date.now().toString(),
-        phone: data.phone,
+        id: '1',
+        phone: data.phone || 'Conta do WhatsApp Business',
         phoneId: data.phoneId,
         wabaId: data.wabaId,
         status: 'connected'
       };
-      setNumbers([...numbers, newEntry]);
+      setNumbers([newEntry]);
       setIsModalOpen(false);
       reset();
       toast.success("Número conectado com sucesso!");
 
-      // Automatically sync webhooks after adding a new number
       toast.info("Sincronizando dados com a Meta...");
       await handleSyncWebhooks();
 
