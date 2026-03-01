@@ -22,7 +22,7 @@ import { getSupabase } from "./src/backend/services/supabase.service";
 import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync } from "fs";
-import { GeminiService } from "./src/backend/services/gemini.service";
+import { OpenAIService } from "./src/backend/services/openai.service";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -140,11 +140,11 @@ BASE DE CONHECIMENTO (FONTE ÚNICA DE VERDADE):
 ${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada para esta empresa ainda."}
 --------------------------------------------------`;
 
-          const response = await GeminiService.generateChatResponse(
+          const response = await OpenAIService.generateChatResponse(
             systemInstruction,
             cleanHistory,
             data.message.text,
-            "gemini-2.0-flash",
+            "gpt-4o-mini",
             [transferToHumanDeclaration]
           );
 

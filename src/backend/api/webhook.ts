@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getSupabase } from "../services/supabase.service";
 import { WhatsAppService } from "../services/whatsapp.service";
 import { GoogleGenAI } from "@google/genai";
-import { GeminiService } from "../services/gemini.service";
+import { OpenAIService } from "../services/openai.service";
 import { VIP_UNLIMITED_EMAILS } from "../../lib/constants";
 
 export const webhookRouter = Router();
@@ -85,11 +85,11 @@ BASE DE CONHECIMENTO (FONTE ÚNICA DE VERDADE):
 ${companyKnowledge || "Aja como um assistente profissional de suporte geral."}
 ------------------------`;
 
-                            const response = await GeminiService.generateChatResponse(
+                            const response = await OpenAIService.generateChatResponse(
                                 systemInstruction,
                                 [], // Webhook current iteration starts without history memory. Real memory requires DB fetch.
                                 text,
-                                "gemini-2.0-flash"
+                                "gpt-4o-mini"
                             );
 
                             const replyText = response.text || "Desculpe, não consegui entender.";

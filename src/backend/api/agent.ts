@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getSupabase } from '../services/supabase.service';
-import { GeminiService } from '../services/gemini.service';
+import { OpenAIService } from '../services/openai.service';
 
 export const agentRouter = Router();
 const transferToHumanDeclaration = {
@@ -119,11 +119,11 @@ ${knowledgeContext || "Nenhum documento cadastrado ainda. Responda com informaç
     }
 
     // 4. Create chat and send message using our centralized REST fetch service
-    const response = await GeminiService.generateChatResponse(
+    const response = await OpenAIService.generateChatResponse(
       systemInstruction,
       cleanHistory,
       message,
-      "gemini-2.0-flash",
+      "gpt-4o-mini",
       [transferToHumanDeclaration]
     );
 
