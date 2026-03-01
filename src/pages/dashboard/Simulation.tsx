@@ -22,19 +22,41 @@ export default function Simulation() {
   const [botName, setBotName] = useState("Orion Bot");
 
   useEffect(() => {
-    fetch("/api/auth/me", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          if (data.user.chatbot_name) setBotName(data.user.chatbot_name);
-          setMessages([
-            { id: 1, sender: "bot", text: `Olá! Sou o ${data.user.chatbot_name || "assistente virtual da Orion"}. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-          ]);
+    const fetchBotName = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // Tentamos buscar primeiro a configuração específica do WhatsApp
+        const waResponse = await fetch("/api/whatsapp/config", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (waResponse.ok) {
+          const waData = await waResponse.json();
+          if (waData && waData.display_name) {
+            setBotName(waData.display_name);
+            setMessages([{ id: 1, sender: "bot", text: `Olá! Sou o ${waData.display_name}. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+            return;
+          }
         }
-      })
-      .catch(err => console.error("Erro ao carregar dados do bot:", err));
+
+        // Fallback antigo via Auth
+        const authResponse = await fetch("/api/auth/me", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const authData = await authResponse.json();
+        if (authData.user && authData.user.chatbot_name) {
+          setBotName(authData.user.chatbot_name);
+          setMessages([{ id: 1, sender: "bot", text: `Olá! Sou o ${authData.user.chatbot_name}. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        } else {
+          setMessages([{ id: 1, sender: "bot", text: `Olá! Sou o assistente virtual da Orion. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados do bot:", err);
+      }
+    };
+
+    fetchBotName();
   }, []);
 
   useEffect(() => {

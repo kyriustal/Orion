@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { OrionWebChat } from './components/ui/OrionWebChat';
 import DashboardLayout from './layouts/DashboardLayout';
 import PublicLayout from './components/public/PublicLayout';
 import Gatekeeper from './components/auth/Gatekeeper';
@@ -46,6 +47,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" richColors />
+      <OrionWebChat />
       <Routes>
         {/* Public Routes with Layout (NO GATEKEEPER) */}
         <Route element={<PublicLayout />}>

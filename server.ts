@@ -17,6 +17,7 @@ import { billingRouter } from "./src/backend/api/billing";
 import { settingsRouter } from "./src/backend/api/settings";
 import { teamRouter } from "./src/backend/api/team";
 import { templatesRouter } from "./src/backend/api/templates";
+import { orionWebRouter } from "./src/backend/api/orion-web";
 import { requireAuth } from "./src/backend/middleware/auth.middleware";
 import { getSupabase } from "./src/backend/services/supabase.service";
 import path from "path";
@@ -198,6 +199,9 @@ ${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada par
 
   // Rotas de Autenticação (Públicas)
   app.use("/api/auth", authRouter);
+
+  // Rota do WebChat da Assistente Orion (Público/Integrado)
+  app.use("/api/orion-web", orionWebRouter);
 
   // Rotas da Área do Cliente (Protegidas por requireAuth)
   app.use("/api/dashboard", requireAuth, dashboardRouter);

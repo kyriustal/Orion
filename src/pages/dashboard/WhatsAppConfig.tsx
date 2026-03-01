@@ -351,7 +351,7 @@ export default function WhatsAppConfig() {
                 <CardTitle>Conectar Novo Número</CardTitle>
                 <CardDescription>Insira as credenciais fornecidas pelo painel da Meta for Developers.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-zinc-700">Número de Exibição</label>
                   <div className="relative">
