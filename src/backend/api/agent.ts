@@ -9,10 +9,10 @@ const transferToHumanDeclaration = {
       name: "transferToHuman",
       description: "Transfere a conversa para um atendente humano. Acione APENAS quando o cliente solicitar explicitamente, apresentar frustração grave, ou o problema for sensível e estiver além da capacidade da IA.",
       parameters: {
-        type: "OBJECT",
+        type: "object",
         properties: {
           reason: {
-            type: "STRING",
+            type: "string",
             description: "O motivo pelo qual a conversa está sendo transferida para um humano."
           }
         },
