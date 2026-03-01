@@ -5,7 +5,7 @@ let ai: GoogleGenAI | null = null;
 
 export function getGeminiClient(): GoogleGenAI {
   if (!ai) {
-    const apiKey = (process.env.GEMINI_API_KEY || "AIzaSyAwIN4X0wQkNQi8BdIyRfQ_FCgY1JmFzoM").trim();
+    const apiKey = (process.env.GEMINI_API_KEY || "AIzaSyAqYQ_81xhjaCglebJeAuD4cEoWg8rtRqo").trim();
     ai = new GoogleGenAI({ apiKey });
   }
   return ai;

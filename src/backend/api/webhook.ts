@@ -6,7 +6,7 @@ import { VIP_UNLIMITED_EMAILS } from "../../lib/constants";
 
 export const webhookRouter = Router();
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "AIzaSyAwIN4X0wQkNQi8BdIyRfQ_FCgY1JmFzoM" });
+const ai = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY || "AIzaSyAqYQ_81xhjaCglebJeAuD4cEoWg8rtRqo").trim() });
 
 webhookRouter.post('/', async (req, res) => {
     try {

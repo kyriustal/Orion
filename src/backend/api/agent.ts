@@ -5,7 +5,7 @@ import { getSupabase } from '../services/supabase.service';
 export const agentRouter = Router();
 
 // Initialize Gemini API with the provided key
-const apiKey = (process.env.GEMINI_API_KEY || "AIzaSyAwIN4X0wQkNQi8BdIyRfQ_FCgY1JmFzoM").trim();
+const apiKey = (process.env.GEMINI_API_KEY || "AIzaSyAqYQ_81xhjaCglebJeAuD4cEoWg8rtRqo").trim();
 console.log(`[GEMINI INIT] API key status: ${apiKey ? `present (starts with ${apiKey.substring(0, 5)}...)` : 'MISSING'}`);
 const ai = new GoogleGenAI({ apiKey });
 
