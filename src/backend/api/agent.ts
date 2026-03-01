@@ -74,19 +74,40 @@ agentRouter.post('/simulate', async (req, res) => {
       console.warn('[RAG] Could not load knowledge base:', kbError);
     }
 
+    // 1.5 Load Agent persona (Display Name inside WhatsApp Configs)
+    let agentName = "ORION";
+    let agentDescription = "um Agente de Inteligência Artificial de elite, projetado para atendimento ao cliente de alta performance.";
+
+    try {
+      const { data: config } = await supabase
+        .from('whatsapp_configs')
+        .select('display_name, description')
+        .eq('organizations_id', orgId)
+        .single();
+
+      if (config) {
+        if (config.display_name) agentName = config.display_name;
+        if (config.description) agentDescription = config.description;
+      }
+    } catch (confError) {
+      console.warn('[AGENT CONFIG] Could not load custom persona:', confError);
+    }
+
     // 2. Build premium system instruction
-    const systemInstruction = `Você é o ORION, um Agente de Inteligência Artificial de elite, projetado para atendimento ao cliente de alta performance.
+    const systemInstruction = `Você é ${agentName}, ${agentDescription}
 
 REGRAS DE OURO (inegociáveis):
-1. *CLAREZA*: Respostas precisas, diretas e sem redundâncias. Cada palavra tem valor.
+1. *CLAREZA*: Respostas precisas, diretas e sem redundâncias. Responda ESTRITAMENTE sobre os serviços estipulados na Base de Conhecimento abaixo. NUNCA invente preços ou localizações.
 2. *FORMATO WhatsApp*: Use apenas markdown nativo do WhatsApp: *negrito*, _itálico_, listas com •. Nunca use HTML ou # cabeçalhos Markdown.
-3. *TOM*: Profissional, acolhedor e humano. Como um gerente de contas de alto nível.
-4. *CONTEXTO ANGOLA*: A moeda é Kwanza (Kz). Frete grátis aplica-se a compras acima de 30.000 Kz fora de Luanda.
-5. *HONESTIDADE*: Se não souber a resposta, diga claramente e ofereça transferir para humano.
-6. *TRANSFERÊNCIA*: Acione transferToHuman IMEDIATAMENTE se o cliente pedir, estiver frustrado, ou o problema for sensível.
+3. *TOM*: Profissional, acolhedor e como se você realmente estivesse na empresa ${agentName}.
+4. *CONTEXTO ANGOLA*: A moeda é Kwanza (Kz). 
+5. *HONESTIDADE*: Se a resposta NÃO estiver na Base de Conhecimento abaixo, Diga claramente e ofereça transferência ao invés de alucinar informações.
+6. *TRANSFERÊNCIA*: Acione transferToHuman IMEDIATAMENTE se o cliente pedir para falar com suporte/atendente humano.
 
-BASE DE CONHECIMENTO (fonte única de verdade — consulte antes de responder):
-${knowledgeContext || "Nenhum documento cadastrado ainda. Responda com informações gerais sobre atendimento ao cliente e a plataforma Orion AI."}`;
+BASE DE CONHECIMENTO DA EMPRESA (fonte única de verdade — ATENHA-SE A ISTO):
+------------------------------------------------------
+${knowledgeContext || "Nenhum documento cadastrado ainda pela empresa. Avise o cliente que os dados internos ainda não foram sincronizados e pergunte se quer ajuda de um humano."}
+------------------------------------------------------`;
 
     // 3. Format history for Gemini (must alternate user/model, start with user)
     const rawHistory = history ? history.map((msg: any) => ({
