@@ -7,7 +7,7 @@ export const agentRouter = Router();
 // Initialize Gemini API with the provided key
 const apiKey = (process.env.GEMINI_API_KEY || "AIzaSyAqYQ_81xhjaCglebJeAuD4cEoWg8rtRqo").trim();
 console.log(`[GEMINI INIT] API key status: ${apiKey ? `present (starts with ${apiKey.substring(0, 5)}...)` : 'MISSING'}`);
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1' } });
 
 const transferToHumanDeclaration: FunctionDeclaration = {
   name: "transferToHuman",
