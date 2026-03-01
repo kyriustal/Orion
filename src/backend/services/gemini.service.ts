@@ -22,7 +22,7 @@ export class GeminiService {
 
         try {
             const chat = ai.chats.create({
-                model: "gemini-2.0-flash",
+                model: "gemini-1.5-flash",
                 config: {
                     systemInstruction,
                     temperature: 0.3,
@@ -41,8 +41,11 @@ export class GeminiService {
             }
 
             return { text: response.text || "" };
-        } catch (error) {
+        } catch (error: any) {
             console.error("[GeminiService] Error generating response:", error);
+            if (error?.status === 429 || error?.message?.includes("Quota exceeded") || error?.message?.includes("429")) {
+                return { text: "⚠️ Desculpe, estou recebendo um volume muito alto de mensagens no momento e meu servidor atingiu o limite da cota gratuita. Por favor, aguarde alguns instantes e tente novamente, ou peça para falar com um atendente humano." };
+            }
             throw error;
         }
     }
