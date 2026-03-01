@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { getSupabase } from "../services/supabase.service";
 import { WhatsAppService } from "../services/whatsapp.service";
 import { GoogleGenAI } from "@google/genai";
-import { OpenAIService } from "../services/openai.service";
 import { VIP_UNLIMITED_EMAILS } from "../../lib/constants";
+import { GeminiService } from "../services/gemini.service";
+import { OpenAIService } from "../services/openai.service";
 
 export const webhookRouter = Router();
 
@@ -27,7 +28,7 @@ webhookRouter.post('/', async (req, res) => {
                             // 1. Validate Meta Phone Number & Org
                             const { data: config } = await supabase
                                 .from('whatsapp_configs')
-                                .select('org_id, access_token, organizations(id, owner_email, plan_status, messages_used)')
+                                .select('org_id, access_token, display_name, description, organizations(id, owner_email, plan_status, messages_used, use_emojis)')
                                 .eq('phone_number_id', phoneNumberId)
                                 .single();
 
@@ -65,7 +66,6 @@ webhookRouter.post('/', async (req, res) => {
                             // 5. Fetch RAG Knowledge base via Vector Search
                             let companyKnowledge = "";
                             try {
-                                const { GeminiService } = await import('../services/gemini.service');
                                 const queryEmbedding = await GeminiService.generateEmbeddings(text);
 
                                 const { data: chunks, error: rpcError } = await supabase.rpc('match_knowledge_chunks', {
@@ -84,18 +84,20 @@ webhookRouter.post('/', async (req, res) => {
                             }
 
                             // 6. Generate AI Response
-                            // 6. Generate AI Response using new REST Service
-                            const systemInstruction = `Você é uma Inteligência Artificial avançada que atua como Assistente Virtual de Atendimento desta Empresa.
+                            const agentName = config.display_name || "Assistente Virtual";
+                            const agentDescription = config.description || "Assistente de Atendimento desta Empresa";
+
+                            const systemInstruction = `Você é ${agentName}, ${agentDescription}.
 DIRETRIZES FUNDAMENTAIS:
 1. FOCO TOTAL NO CONHECIMENTO: Você DEVE responder a *todas* as perguntas dos clientes com base ÚNICA E EXCLUSIVAMENTE na BASE DE CONHECIMENTO fornecida abaixo. NUNCA invente serviços, preços, regras de frete ou localizações que não estejam no texto.
 2. ATENDIMENTO HUMANO: Apenas transfira para o atendimento humano questões que você absolutamente não conseguir resolver com os dados fornecidos, ou situações *verdadeiramente sensíveis* (reclamações extremas, ameaças legais, problemas financeiros complexos).
 3. TEXTO LIMPO E PROFISSIONAL: Suas respostas devem ser impecáveis. Use formatação Markdown (*negrito*, listas) para facilitar a leitura. Evite parágrafos gigantes.
-4. TOM DE VOZ: Seja extremamente inteligente, educado, direto e acolhedor.
+4. TOM DE VOZ: Seja extremamente inteligente, educado, direto e acolhedor. Como parte da equipe da empresa, vista a camisa.
 5. EMOJIS: ${org.use_emojis ? "Use no máximo 1 ou 2 emojis por mensagem para manter a empatia." : "NÃO use emojis em nenhuma circunstância."}
 
 BASE DE CONHECIMENTO DA EMPRESA (Sua Única Fonte de Verdade):
 ------------------------
-${companyKnowledge || "A base de conhecimento desta empresa ainda não foi configurada. Informe gentilmente ao cliente que você ainda está em fase de treinamento e peça que aguarde um humano."}
+${companyKnowledge || "A base de conhecimento desta empresa ainda não foi configurada. Informe gentilmente ao cliente que você ainda não tem as respostas e peça que aguarde um humano."}
 ------------------------`;
 
                             const response = await OpenAIService.generateChatResponse(

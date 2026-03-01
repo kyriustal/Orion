@@ -21,11 +21,14 @@ export class GeminiService {
         const ai = this.getClient();
 
         try {
+            // Utilizamos gemini-1.5-flash pela alta estabilidade e generosa cota gratuita no tier padrão da API
             const chat = ai.chats.create({
                 model: "gemini-1.5-flash",
                 config: {
                     systemInstruction,
-                    temperature: 0.3,
+                    temperature: 0.1, // Temperatura ultrabaixa para forçar a IA a ater-se APENAS aos documentos e evitar alucinações de serviços
+                    topK: 10,
+                    topP: 0.8,
                     tools: tools.length > 0 ? tools : undefined
                 },
                 history: history
@@ -43,8 +46,9 @@ export class GeminiService {
             return { text: response.text || "" };
         } catch (error: any) {
             console.error("[GeminiService] Error generating response:", error);
+            // Proteção contra Rate Limits da Google
             if (error?.status === 429 || error?.message?.includes("Quota exceeded") || error?.message?.includes("429")) {
-                return { text: "⚠️ Desculpe, estou recebendo um volume muito alto de mensagens no momento e meu servidor atingiu o limite da cota gratuita. Por favor, aguarde alguns instantes e tente novamente, ou peça para falar com um atendente humano." };
+                return { text: "⚠️ Desculpe, estou recebendo um volume muito alto de mensagens no momento. Por favor, aguarde alguns instantes e tente novamente, ou peça para falar com um atendente humano." };
             }
             throw error;
         }
@@ -57,7 +61,6 @@ export class GeminiService {
                 model: 'text-embedding-004',
                 contents: text,
             });
-            // O SDK retorna array de numéricos. Confirme na doc, normalmente é response.embeddings[0].values
             return response.embeddings?.[0]?.values || [];
         } catch (error) {
             console.error("[GeminiService] Error generating embeddings:", error);
