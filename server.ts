@@ -3,49 +3,27 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { webhookRouter } from "./src/backend/api/webhook";
 import { authRouter } from "./src/backend/api/auth";
 import { dashboardRouter } from "./src/backend/api/dashboard";
 import { whatsappRouter } from "./src/backend/api/whatsapp";
-import { agentRouter } from "./src/backend/api/agent";
 import { chatsRouter } from "./src/backend/api/chats";
 import { automationsRouter } from "./src/backend/api/automations";
 import { subscriptionsRouter } from "./src/backend/api/subscriptions";
-import { knowledgeRouter } from "./src/backend/api/knowledge";
 import { billingRouter } from "./src/backend/api/billing";
 import { settingsRouter } from "./src/backend/api/settings";
 import { teamRouter } from "./src/backend/api/team";
 import { templatesRouter } from "./src/backend/api/templates";
-import { orionWebRouter } from "./src/backend/api/orion-web";
 import { requireAuth } from "./src/backend/middleware/auth.middleware";
 import { getSupabase } from "./src/backend/services/supabase.service";
 import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync } from "fs";
-import { OpenAIService } from "./src/backend/services/openai.service";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const transferToHumanDeclaration = {
-  functionDeclarations: [
-    {
-      name: "transferToHuman",
-      description: "Transfere a conversa para um atendente humano. Use esta função APENAS quando o cliente solicitar explicitamente para falar com um humano, ou quando apresentar um problema sensível, reclamação grave ou situação que a IA não consiga resolver.",
-      parameters: {
-        type: Type.OBJECT,
-        properties: {
-          reason: {
-            type: Type.STRING,
-            description: "O motivo pelo qual a conversa está sendo transferida para um humano."
-          }
-        },
-        required: ["reason"]
-      }
-    }
-  ]
-};
+
 
 async function startServer() {
   const app = express();
@@ -73,112 +51,8 @@ async function startServer() {
       // Broadcast to everyone in the room (including sender for confirmation)
       io.to(data.chatId).emit("new_message", data);
 
-      // If the message is from the user (customer) and AI is active, generate a response
-      if (data.message.sender === "user" && data.isAiActive) {
-        try {
-          // Simulate typing delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+      // Lógica de processamento de IA removida. Apenas mensagens de usuários são broadcastadas.
 
-          const rawHistory = data.history ? data.history.map((msg: any) => ({
-            role: msg.sender === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.text }]
-          })) : [];
-
-          const cleanHistory: any[] = [];
-          let currentRole = '';
-          let currentParts: any[] = [];
-
-          for (const msg of rawHistory) {
-            if (msg.role !== currentRole) {
-              if (currentRole !== '') {
-                cleanHistory.push({ role: currentRole, parts: currentParts });
-              }
-              currentRole = msg.role;
-              currentParts = [...msg.parts];
-            } else {
-              currentParts.push({ text: '\n\n' });
-              currentParts.push(...msg.parts);
-            }
-          }
-          if (currentRole !== '') {
-            cleanHistory.push({ role: currentRole, parts: currentParts });
-          }
-
-          // Ensure history starts with 'user'
-          if (cleanHistory.length > 0 && cleanHistory[0].role === 'model') {
-            cleanHistory.shift();
-          }
-
-          // Identify the organization (tenant) context for this chat
-          // In a real app we would get the orgId from the connected chat session
-          // For now we assume a default or pass it through the socket data
-          const orgId = data.orgId || "00000000-0000-0000-0000-000000000000";
-
-          // Busca os documentos e regras específicas DESSA empresa no banco de dados SUPABASE
-          const supabase = getSupabase();
-          let companyKnowledgeBaseText = "";
-
-          const { data: docs, error } = await supabase
-            .from('knowledge_documents')
-            .select('content')
-            .eq('org_id', orgId);
-
-          if (!error && docs && docs.length > 0) {
-            companyKnowledgeBaseText = docs.map((d: any) => d.content).join('\n\n');
-          }
-
-          const systemInstruction = `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
-DIRETRIZES FUNDAMENTAIS:
-1. TEXTO LIMPO: Jamais use ruídos, símbolos repetitivos ou caracteres desnecessários. Suas respostas devem ser esteticamente organizadas.
-2. ESTRUTURA: Use Markdowns. *Negrito* para pontos importantes e listas para organização.
-3. ESTILO: Responda de forma direta e humana. Evite introduções longas.
-4. CONTEXTO ANGOLA: Atuamos com foco no mercado de Angola. A moeda é Kwanza (Kz). 
-   - REGRA DE FRETE: O Frete Grátis para fora de Luanda aplica-se automaticamente para compras acima de 30.000 Kz.
-5. FERRAMENTA transferToHuman: Acione IMEDIATAMENTE se o cliente pedir falar com um humano acompanhado de um motivo válido.
-
-BASE DE CONHECIMENTO (FONTE ÚNICA DE VERDADE):
---------------------------------------------------
-${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada para esta empresa ainda."}
---------------------------------------------------`;
-
-          const response = await OpenAIService.generateChatResponse(
-            systemInstruction,
-            cleanHistory,
-            data.message.text,
-            "gpt-4o-mini",
-            [transferToHumanDeclaration]
-          );
-
-          let replyText = response.text;
-          let isTransfer = false;
-
-          if (response.functionCalls && response.functionCalls.length > 0) {
-            const call = response.functionCalls[0];
-            if (call.name === "transferToHuman") {
-              const reason = call.args?.reason || "Solicitação do cliente para falar com humano";
-              console.log(`[ALERTA SECRETARIA] Chat ${data.chatId} solicitou transferência. Motivo: ${reason}`);
-              replyText = "Compreendo. Estou transferindo o seu atendimento para a nossa equipe humana especializada. Por favor, aguarde um momento na linha.";
-              isTransfer = true;
-            }
-          }
-
-          const botMessage = {
-            id: Date.now(),
-            sender: "bot",
-            text: replyText,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-
-          io.to(data.chatId).emit("new_message", { chatId: data.chatId, message: botMessage, isTransfer });
-        } catch (error: any) {
-          console.error("[ORION BOT ERROR] Error generating AI response in Live Chat:", error?.message || error);
-          io.to(data.chatId).emit("new_message", {
-            chatId: data.chatId,
-            message: { id: Date.now(), sender: "bot", text: "Desculpe, encontrei um erro temporário ao processar sua resposta. Tente novamente.", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-            isTransfer: false
-          });
-        }
-      }
     });
 
     socket.on("disconnect", () => {
@@ -200,17 +74,12 @@ ${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada par
   // Rotas de Autenticação (Públicas)
   app.use("/api/auth", authRouter);
 
-  // Rota do WebChat da Assistente Orion (Público/Integrado)
-  app.use("/api/orion-web", orionWebRouter);
-
   // Rotas da Área do Cliente (Protegidas por requireAuth)
   app.use("/api/dashboard", requireAuth, dashboardRouter);
   app.use("/api/whatsapp", requireAuth, whatsappRouter);
-  app.use("/api/agent", requireAuth, agentRouter);
   app.use("/api/chats", requireAuth, chatsRouter);
   app.use("/api/automations", requireAuth, automationsRouter);
   app.use("/api/subscriptions", requireAuth, subscriptionsRouter);
-  app.use("/api/knowledge", requireAuth, knowledgeRouter);
   app.use("/api/team", requireAuth, teamRouter);
   app.use("/api/templates", requireAuth, templatesRouter);
   app.use("/api/settings", requireAuth, settingsRouter);
