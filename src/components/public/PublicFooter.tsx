@@ -34,7 +34,6 @@ export default function PublicFooter() {
                         <li><Link to="/api-docs" className="hover:text-emerald-600 transition-colors">Documentação da API</Link></li>
                         <li><Link to="/webhooks" className="hover:text-emerald-600 transition-colors">Webhooks Meta</Link></li>
                         <li><Link to="/casos-de-uso" className="hover:text-emerald-600 transition-colors">Casos de Uso</Link></li>
-                        <li><Link to="/open-source" className="hover:text-emerald-600 transition-colors">GitHub Open Source</Link></li>
                     </ul>
                 </div>
 
