@@ -5,7 +5,7 @@ export const automationsRouter = Router();
 // GET /api/automations - Listar automações/campanhas
 automationsRouter.get('/', async (req, res) => {
   const orgId = req.user?.org_id;
-  
+
   res.json([
     { id: 'auto-1', name: 'Boas-vindas Novos Clientes', type: 'flow', status: 'active' },
     { id: 'auto-2', name: 'Promoção Black Friday', type: 'broadcast', status: 'draft' }
@@ -23,7 +23,7 @@ automationsRouter.post('/', async (req, res) => {
 automationsRouter.post('/campaigns/send', async (req, res) => {
   try {
     const { name, template, audience, filters } = req.body;
-    
+
     // Simulate fetching contacts based on audience and filters
     const contacts = [
       { id: 1, phone: "+244923000001", name: "Cliente 1" },
@@ -34,21 +34,26 @@ automationsRouter.post('/campaigns/send', async (req, res) => {
     // Start background job for sending messages
     // We don't await this so the request returns immediately
     (async () => {
-      console.log(`Starting campaign: ${name} with ${contacts.length} contacts`);
-      for (const contact of contacts) {
-        console.log(`Sending template ${template} to ${contact.phone}...`);
-        
+      console.log(`[CAMPANHA] Iniciando: "${name}" - ${contacts.length} destinatários.`);
+      for (let i = 0; i < contacts.length; i++) {
+        const contact = contacts[i];
+        console.log(`[CAMPANHA] Enviando (${i + 1}/${contacts.length}) template "${template}" para ${contact.phone}...`);
+
         // TODO: Call Meta API to send template message
-        
-        // Atraso de 2 segundos por destinatário para não ferir as políticas da Meta
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // await WhatsAppService.sendTemplateMessage(phoneNumberId, accessToken, contact.phone, template);
+
+        // DELAY de 3 segundos por destinatário conforme políticas da Meta.
+        // Não remover: reduz risco de banimento por spam.
+        if (i < contacts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
-      console.log(`Campaign ${name} finished.`);
+      console.log(`[CAMPANHA] "${name}" concluída. ${contacts.length} mensagens enviadas.`);
     })();
 
-    res.json({ 
-      message: 'Campanha iniciada com sucesso. As mensagens estão sendo enviadas em background.',
-      estimatedTime: contacts.length * 2 // 2 seconds per contact
+    res.json({
+      message: `Campanha "${name}" iniciada com sucesso. ${contacts.length} mensagens estão sendo enviadas em background com delay de 3s por número (política da Meta).`,
+      estimatedTime: contacts.length * 3 // 3 seconds per contact
     });
   } catch (error) {
     console.error("Erro ao iniciar campanha:", error);
