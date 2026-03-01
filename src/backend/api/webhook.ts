@@ -2,11 +2,10 @@ import { Router } from 'express';
 import { getSupabase } from "../services/supabase.service";
 import { WhatsAppService } from "../services/whatsapp.service";
 import { GoogleGenAI } from "@google/genai";
+import { GeminiService } from "../services/gemini.service";
 import { VIP_UNLIMITED_EMAILS } from "../../lib/constants";
 
 export const webhookRouter = Router();
-
-const ai = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY || "").trim() });
 
 webhookRouter.post('/', async (req, res) => {
     try {
@@ -71,10 +70,8 @@ webhookRouter.post('/', async (req, res) => {
                             }
 
                             // 6. Generate AI Response
-                            const chat = ai.chats.create({
-                                model: "gemini-2.5-flash",
-                                config: {
-                                    systemInstruction: `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
+                            // 6. Generate AI Response using new REST Service
+                            const systemInstruction = `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
 DIRETRIZES FUNDAMENTAIS:
 1. TEXTO LIMPO: Jamais use ruídos, símbolos repetitivos ou caracteres desnecessários. Suas respostas devem ser esteticamente organizadas.
 2. ESTRUTURA: Use Markdowns. *Negrito* para pontos importantes, tabelas para dados comparativos e listas para passos.
@@ -86,12 +83,16 @@ DIRETRIZES FUNDAMENTAIS:
 BASE DE CONHECIMENTO (FONTE ÚNICA DE VERDADE):
 ------------------------
 ${companyKnowledge || "Aja como um assistente profissional de suporte geral."}
-------------------------`,
-                                    temperature: 0.2
-                                }
-                            });
-                            const aiResponse = await chat.sendMessage({ message: text });
-                            const replyText = aiResponse.text || "Desculpe, não consegui entender.";
+------------------------`;
+
+                            const response = await GeminiService.generateChatResponse(
+                                systemInstruction,
+                                [], // Webhook current iteration starts without history memory. Real memory requires DB fetch.
+                                text,
+                                "gemini-2.0-flash"
+                            );
+
+                            const replyText = response.text || "Desculpe, não consegui entender.";
 
                             // 7. Save Bot Message & Update Billing
                             await supabase.from('messages').insert({ session_id: sessionId, role: 'model', content: replyText });

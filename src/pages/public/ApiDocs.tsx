@@ -1,4 +1,4 @@
-import { Code2, Braces, Terminal } from "lucide-react";
+import { Code2, Braces, Terminal, Lock } from "lucide-react";
 
 export default function ApiDocs() {
     return (

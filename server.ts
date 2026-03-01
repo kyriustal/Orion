@@ -22,25 +22,28 @@ import { getSupabase } from "./src/backend/services/supabase.service";
 import path from "path";
 import { fileURLToPath } from "url";
 import { existsSync } from "fs";
+import { GeminiService } from "./src/backend/services/gemini.service";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ai = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY || "").trim() });
-
-const transferToHumanDeclaration: FunctionDeclaration = {
-  name: "transferToHuman",
-  description: "Transfere a conversa para um atendente humano. Use esta função APENAS quando o cliente solicitar explicitamente para falar com um humano, ou quando apresentar um problema sensível, reclamação grave ou situação que a IA não consiga resolver.",
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      reason: {
-        type: Type.STRING,
-        description: "O motivo pelo qual a conversa está sendo transferida para um humano."
+const transferToHumanDeclaration = {
+  functionDeclarations: [
+    {
+      name: "transferToHuman",
+      description: "Transfere a conversa para um atendente humano. Use esta função APENAS quando o cliente solicitar explicitamente para falar com um humano, ou quando apresentar um problema sensível, reclamação grave ou situação que a IA não consiga resolver.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          reason: {
+            type: "STRING",
+            description: "O motivo pelo qual a conversa está sendo transferida para um humano."
+          }
+        },
+        required: ["reason"]
       }
-    },
-    required: ["reason"]
-  }
+    }
+  ]
 };
 
 async function startServer() {
@@ -123,10 +126,7 @@ async function startServer() {
             companyKnowledgeBaseText = docs.map((d: any) => d.content).join('\n\n');
           }
 
-          const chat = ai.chats.create({
-            model: "gemini-2.0-flash",
-            config: {
-              systemInstruction: `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
+          const systemInstruction = `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
 DIRETRIZES FUNDAMENTAIS:
 1. TEXTO LIMPO: Jamais use ruídos, símbolos repetitivos ou caracteres desnecessários. Suas respostas devem ser esteticamente organizadas.
 2. ESTRUTURA: Use Markdowns. *Negrito* para pontos importantes e listas para organização.
@@ -138,14 +138,15 @@ DIRETRIZES FUNDAMENTAIS:
 BASE DE CONHECIMENTO (FONTE ÚNICA DE VERDADE):
 --------------------------------------------------
 ${companyKnowledgeBaseText || "Nenhuma documentação específica cadastrada para esta empresa ainda."}
---------------------------------------------------`,
-              temperature: 0.2,
-              tools: [{ functionDeclarations: [transferToHumanDeclaration] }]
-            },
-            history: cleanHistory
-          });
+--------------------------------------------------`;
 
-          const response = await chat.sendMessage({ message: data.message.text });
+          const response = await GeminiService.generateChatResponse(
+            systemInstruction,
+            cleanHistory,
+            data.message.text,
+            "gemini-2.0-flash",
+            [transferToHumanDeclaration]
+          );
 
           let replyText = response.text;
           let isTransfer = false;

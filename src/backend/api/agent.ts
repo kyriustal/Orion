@@ -1,27 +1,25 @@
 import { Router } from 'express';
-import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { getSupabase } from '../services/supabase.service';
+import { GeminiService } from '../services/gemini.service';
 
 export const agentRouter = Router();
-
-// Initialize Gemini API with the provided key
-const apiKey = (process.env.GEMINI_API_KEY || "").trim();
-console.log(`[GEMINI INIT] API key status: ${apiKey ? `present (starts with ${apiKey.substring(0, 5)}...)` : 'MISSING'}`);
-const ai = new GoogleGenAI({ apiKey });
-
-const transferToHumanDeclaration: FunctionDeclaration = {
-  name: "transferToHuman",
-  description: "Transfere a conversa para um atendente humano. Acione APENAS quando o cliente solicitar explicitamente, apresentar frustração grave, ou o problema for sensível e estiver além da capacidade da IA.",
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      reason: {
-        type: Type.STRING,
-        description: "O motivo pelo qual a conversa está sendo transferida para um humano."
+const transferToHumanDeclaration = {
+  functionDeclarations: [
+    {
+      name: "transferToHuman",
+      description: "Transfere a conversa para um atendente humano. Acione APENAS quando o cliente solicitar explicitamente, apresentar frustração grave, ou o problema for sensível e estiver além da capacidade da IA.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          reason: {
+            type: "STRING",
+            description: "O motivo pelo qual a conversa está sendo transferida para um humano."
+          }
+        },
+        required: ["reason"]
       }
-    },
-    required: ["reason"]
-  }
+    }
+  ]
 };
 
 // GET /api/agent/config
@@ -120,18 +118,14 @@ ${knowledgeContext || "Nenhum documento cadastrado ainda. Responda com informaç
       cleanHistory.shift();
     }
 
-    // 4. Create chat and send message
-    const chat = ai.chats.create({
-      model: "gemini-2.0-flash",
-      config: {
-        systemInstruction,
-        temperature: 0.1,
-        tools: [{ functionDeclarations: [transferToHumanDeclaration] }]
-      },
-      history: cleanHistory
-    });
-
-    const response = await chat.sendMessage({ message });
+    // 4. Create chat and send message using our centralized REST fetch service
+    const response = await GeminiService.generateChatResponse(
+      systemInstruction,
+      cleanHistory,
+      message,
+      "gemini-2.0-flash",
+      [transferToHumanDeclaration]
+    );
 
     // 5. Handle function calls (transferToHuman)
     if (response.functionCalls && response.functionCalls.length > 0) {
