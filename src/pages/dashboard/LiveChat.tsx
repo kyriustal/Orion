@@ -136,68 +136,78 @@ export default function LiveChat() {
       </Card>
 
       {/* Janela de Chat */}
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="p-4 border-b border-zinc-200 flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle className="text-lg">{activeChat.name}</CardTitle>
-            <p className="text-xs text-zinc-500">{activeChat.phone}</p>
-          </div>
-          <div className="flex items-center gap-3 bg-zinc-50 px-3 py-1.5 rounded-full border border-zinc-200">
-            <span className="text-sm font-medium text-zinc-700">Modo IA Ativo</span>
-            <Switch checked={isAiActive} onCheckedChange={setIsAiActive} />
-          </div>
-        </CardHeader>
-
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50/50">
-          {!isAiActive && (
-            <div className="flex items-center justify-center gap-2 text-xs font-medium text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200">
-              <AlertCircle className="w-4 h-4" />
-              IA Pausada. Você está no controle desta conversa.
+      {activeChat ? (
+        <Card className="flex-1 flex flex-col">
+          <CardHeader className="p-4 border-b border-zinc-200 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-lg">{activeChat.name}</CardTitle>
+              <p className="text-xs text-zinc-500">{activeChat.phone}</p>
             </div>
-          )}
+            <div className="flex items-center gap-3 bg-zinc-50 px-3 py-1.5 rounded-full border border-zinc-200">
+              <span className="text-sm font-medium text-zinc-700">Modo IA Ativo</span>
+              <Switch checked={isAiActive} onCheckedChange={setIsAiActive} />
+            </div>
+          </CardHeader>
 
-          {messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender === 'user'
+          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50/50">
+            {!isAiActive && (
+              <div className="flex items-center justify-center gap-2 text-xs font-medium text-amber-600 bg-amber-50 p-2 rounded-md border border-amber-200">
+                <AlertCircle className="w-4 h-4" />
+                IA Pausada. Você está no controle desta conversa.
+              </div>
+            )}
+
+            {messages.map(msg => (
+              <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'}`}>
+                <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender === 'user'
                   ? 'bg-white border border-zinc-200 text-zinc-900 rounded-tl-sm'
                   : msg.sender === 'bot'
                     ? 'bg-emerald-50 border border-emerald-100 text-emerald-900 rounded-tr-sm'
                     : 'bg-zinc-900 text-zinc-50 rounded-tr-sm'
-                }`}>
-                <div className="flex items-center gap-1.5 mb-1 opacity-70">
-                  {msg.sender === 'user' ? <User className="w-3 h-3" /> : msg.sender === 'bot' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                  <span className="text-[10px] font-medium uppercase tracking-wider">
-                    {msg.sender === 'user' ? 'Cliente' : msg.sender === 'bot' ? 'IA' : 'Você (Humano)'}
-                  </span>
+                  }`}>
+                  <div className="flex items-center gap-1.5 mb-1 opacity-70">
+                    {msg.sender === 'user' ? <User className="w-3 h-3" /> : msg.sender === 'bot' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                    <span className="text-[10px] font-medium uppercase tracking-wider">
+                      {msg.sender === 'user' ? 'Cliente' : msg.sender === 'bot' ? 'IA' : 'Você (Humano)'}
+                    </span>
+                  </div>
+                  <p className="text-sm">{msg.text}</p>
+                  <div className="text-[10px] text-right mt-1 opacity-50">{msg.time}</div>
                 </div>
-                <p className="text-sm">{msg.text}</p>
-                <div className="text-[10px] text-right mt-1 opacity-50">{msg.time}</div>
               </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </CardContent>
+            ))}
+            <div ref={messagesEndRef} />
+          </CardContent>
 
-        <div className="p-4 border-t border-zinc-200 bg-white">
-          <div className="flex gap-2">
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Digite sua mensagem para intervir..."
-              className="flex-1"
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            />
-            <Button onClick={handleSimulateCustomer} variant="outline" title="Simular Cliente" className="shrink-0 text-zinc-500">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Simular Cliente
-            </Button>
-            <Button onClick={handleSend} className="shrink-0">
-              <Send className="w-4 h-4 mr-2" />
-              Enviar como Humano
-            </Button>
+          <div className="p-4 border-t border-zinc-200 bg-white">
+            <div className="flex gap-2">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Digite sua mensagem para intervir..."
+                className="flex-1"
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              />
+              <Button onClick={handleSimulateCustomer} variant="outline" title="Simular Cliente" className="shrink-0 text-zinc-500">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Simular Cliente
+              </Button>
+              <Button onClick={handleSend} className="shrink-0">
+                <Send className="w-4 h-4 mr-2" />
+                Enviar como Humano
+              </Button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      ) : (
+        <Card className="flex-1 flex items-center justify-center">
+          <div className="text-center text-zinc-400 p-8">
+            <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-20" />
+            <p className="text-lg font-medium text-zinc-500">Nenhuma conversa selecionada</p>
+            <p className="text-sm mt-1">Aguardando mensagens dos clientes via WhatsApp...</p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
