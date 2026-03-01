@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getSupabase } from '../services/supabase.service';
 import { OpenAIService } from '../services/openai.service';
+import { Type } from '@google/genai';
 
 export const agentRouter = Router();
 const transferToHumanDeclaration = {
@@ -9,10 +10,10 @@ const transferToHumanDeclaration = {
       name: "transferToHuman",
       description: "Transfere a conversa para um atendente humano. Acione APENAS quando o cliente solicitar explicitamente, apresentar frustração grave, ou o problema for sensível e estiver além da capacidade da IA.",
       parameters: {
-        type: "object",
+        type: Type.OBJECT,
         properties: {
           reason: {
-            type: "string",
+            type: Type.STRING,
             description: "O motivo pelo qual a conversa está sendo transferida para um humano."
           }
         },
