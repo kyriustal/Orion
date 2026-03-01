@@ -46,4 +46,19 @@ export class GeminiService {
             throw error;
         }
     }
+
+    static async generateEmbeddings(text: string): Promise<number[]> {
+        const ai = this.getClient();
+        try {
+            const response = await ai.models.embedContent({
+                model: 'text-embedding-004',
+                contents: text,
+            });
+            // O SDK retorna array de numéricos. Confirme na doc, normalmente é response.embeddings[0].values
+            return response.embeddings?.[0]?.values || [];
+        } catch (error) {
+            console.error("[GeminiService] Error generating embeddings:", error);
+            throw error;
+        }
+    }
 }

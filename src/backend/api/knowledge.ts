@@ -85,31 +85,78 @@ knowledgeRouter.post("/upload", (req: Request, res: Response, next) => {
 
     // Salvar o conteúdo processado no banco de dados SUPABASE
     const supabase = getSupabase();
-    const { error } = await supabase.from('knowledge_documents').insert([{
+    const { data: docData, error } = await supabase.from('knowledge_documents').insert([{
       org_id: orgId,
       filename: filename,
       original_name: originalname,
       content: extractedText,
       size: size,
-      status: 'ready'
-    }]);
+      status: 'processing'
+    }]).select('id').single();
 
     if (error) {
       console.error("[Supabase Error]", error);
       throw new Error("Falha ao salvar o documento no Supabase.");
     }
 
+    // Processamento de Chunks e Embeddings em Background
+    (async () => {
+      try {
+        const { GeminiService } = await import('../services/gemini.service');
+
+        // Simple chunker: dividir por parágrafos e agrupar
+        const paragraphs = extractedText.split(/\n\s*\n/);
+        const chunks: string[] = [];
+        let currentChunk = "";
+
+        for (const para of paragraphs) {
+          if (currentChunk.length + para.length > 2000) {
+            if (currentChunk.trim().length > 0) chunks.push(currentChunk.trim());
+            currentChunk = para + "\n\n";
+          } else {
+            currentChunk += para + "\n\n";
+          }
+        }
+        if (currentChunk.trim().length > 0) chunks.push(currentChunk.trim());
+
+        console.log(`[RAG] Documento ${docData.id} dividido em ${chunks.length} chunks. Gerando embeddings...`);
+
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          if (chunk.length < 10) continue; // Ignora chunks vazios/menores
+
+          const embedding = await GeminiService.generateEmbeddings(chunk);
+
+          await supabase.from('knowledge_chunks').insert([{
+            document_id: docData.id,
+            org_id: orgId,
+            content: chunk,
+            embedding: embedding
+          }]);
+
+          // Delay rate-limit simples (GenAI)
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        await supabase.from('knowledge_documents').update({ status: 'ready' }).eq('id', docData.id);
+        console.log(`[RAG] Processamento do documento ${docData.id} concluído com sucesso.`);
+      } catch (e) {
+        console.error("[RAG] Erro processando embeddings do documento:", e);
+        await supabase.from('knowledge_documents').update({ status: 'error' }).eq('id', docData.id);
+      }
+    })();
+
     // Apagar o arquivo temporário local para poupar espaço
     fs.unlinkSync(filePath);
 
     // Retorna os dados do arquivo processado
     res.json({
-      message: "Arquivo recebido e indexado com sucesso no Supabase!",
+      message: "Arquivo recebido e em processamento de busca vetorial!",
       file: {
         id: filename,
         name: originalname,
         size: size,
-        status: "ready", // Pronto para uso imediato pela LLM
+        status: "processing", // Sendo processado
       },
     });
   } catch (error: any) {

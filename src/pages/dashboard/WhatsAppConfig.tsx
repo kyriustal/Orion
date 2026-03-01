@@ -18,10 +18,18 @@ type WhatsAppNumber = {
 };
 
 const newNumberSchema = z.object({
-  phone: z.string().min(8, "Número inválido"),
+  phone: z.string().min(8, "Número de exibição é obrigatório"),
   phoneId: z.string().min(5, "ID inválido"),
   wabaId: z.string().min(5, "WABA ID inválido"),
   token: z.string().min(10, "Token inválido"),
+  appId: z.string().optional(),
+  clientSecret: z.string().optional(),
+  displayName: z.string().min(2, "O Nome do Bot é obrigatório"),
+  businessCategory: z.string().optional(),
+  description: z.string().optional(),
+  profilePictureUrl: z.union([z.literal(""), z.string().url("URL de imagem inválida").optional()]),
+  website: z.union([z.literal(""), z.string().url("Website inválido").optional()]),
+  supportEmail: z.union([z.literal(""), z.string().email("E-mail inválido").optional()])
 });
 
 type NewNumberFormValues = z.infer<typeof newNumberSchema>;
@@ -136,7 +144,15 @@ export default function WhatsAppConfig() {
         body: JSON.stringify({
           phone_number_id: data.phoneId,
           waba_id: data.wabaId,
-          access_token: data.token
+          access_token: data.token,
+          app_id: data.appId,
+          client_secret: data.clientSecret,
+          display_name: data.displayName,
+          business_category: data.businessCategory,
+          description: data.description,
+          profile_picture_url: data.profilePictureUrl,
+          website: data.website,
+          support_email: data.supportEmail
         })
       });
 
@@ -368,6 +384,58 @@ export default function WhatsAppConfig() {
                   </div>
                   {errors.token && <p className="text-xs text-red-500">{errors.token.message}</p>}
                   <p className="text-xs text-zinc-500">Gere um token permanente criando um usuário de sistema no Business Manager.</p>
+                </div>
+                <div className="space-y-4 border-t border-zinc-200 pt-4 mt-4">
+                  <h4 className="text-sm font-semibold text-zinc-900">Perfil do Agente (Opcional)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700">Nome do Bot</label>
+                      <Input {...register("displayName")} placeholder="Ex: Orion Assistant" />
+                      {errors.displayName && <p className="text-xs text-red-500">{errors.displayName.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700">Categoria</label>
+                      <Input {...register("businessCategory")} placeholder="Ex: Tecnologia" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700">Descrição</label>
+                    <Input {...register("description")} placeholder="Ex: Assistente virtual de vendas" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700">Website</label>
+                      <Input {...register("website")} placeholder="https://..." />
+                      {errors.website && <p className="text-xs text-red-500">{errors.website.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700">E-mail de Suporte</label>
+                      <Input {...register("supportEmail")} placeholder="contato@..." />
+                      {errors.supportEmail && <p className="text-xs text-red-500">{errors.supportEmail.message}</p>}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700">URL da Foto de Perfil</label>
+                    <Input {...register("profilePictureUrl")} placeholder="https://link-da-imagem.jpg" />
+                    {errors.profilePictureUrl && <p className="text-xs text-red-500">{errors.profilePictureUrl.message}</p>}
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-t border-zinc-200 pt-4 mt-4">
+                  <h4 className="text-sm font-semibold text-zinc-900">Configurações Avançadas (Opcional)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700">App ID</label>
+                      <Input {...register("appId")} placeholder="ID do App Meta" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700">Client Secret</label>
+                      <Input type="password" {...register("clientSecret")} placeholder="Secret do App" />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="bg-zinc-50 border-t border-zinc-200 py-4 flex justify-end gap-2 rounded-b-xl">

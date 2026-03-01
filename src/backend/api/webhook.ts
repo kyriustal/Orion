@@ -62,11 +62,25 @@ webhookRouter.post('/', async (req, res) => {
                             // 4. Save Customer Message
                             await supabase.from('messages').insert({ session_id: sessionId, role: 'user', content: text });
 
-                            // 5. Fetch RAG Knowledge base
+                            // 5. Fetch RAG Knowledge base via Vector Search
                             let companyKnowledge = "";
-                            const { data: docs } = await supabase.from('knowledge_documents').select('content').eq('org_id', org.id);
-                            if (docs && docs.length > 0) {
-                                companyKnowledge = docs.map((d: any) => d.content).join('\\n\\n');
+                            try {
+                                const { GeminiService } = await import('../services/gemini.service');
+                                const queryEmbedding = await GeminiService.generateEmbeddings(text);
+
+                                const { data: chunks, error: rpcError } = await supabase.rpc('match_knowledge_chunks', {
+                                    query_embedding: queryEmbedding,
+                                    match_threshold: 0.5, // 0.5 de similaridade mínima
+                                    match_count: 5, // Traz os top 5 contextos
+                                    p_org_id: org.id
+                                });
+
+                                if (!rpcError && chunks && chunks.length > 0) {
+                                    companyKnowledge = chunks.map((c: any) => c.content).join('\n\n---\n\n');
+                                    console.log(`[RAG] Encontrados ${chunks.length} chunks relevantes para a resposta.`);
+                                }
+                            } catch (ragError) {
+                                console.error("[RAG Error] Falha na busca vetorial:", ragError);
                             }
 
                             // 6. Generate AI Response
