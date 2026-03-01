@@ -26,7 +26,7 @@ import { existsSync } from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ai = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY || "AIzaSyAqYQ_81xhjaCglebJeAuD4cEoWg8rtRqo").trim(), httpOptions: { apiVersion: 'v1' } });
+const ai = new GoogleGenAI({ apiKey: (process.env.GEMINI_API_KEY || "AIzaSyAqYQ_81xhjaCglebJeAuD4cEoWg8rtRqo").trim() });
 
 const transferToHumanDeclaration: FunctionDeclaration = {
   name: "transferToHuman",
@@ -124,7 +124,7 @@ async function startServer() {
           }
 
           const chat = ai.chats.create({
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-2.0-flash",
             config: {
               systemInstruction: `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
 DIRETRIZES FUNDAMENTAIS:
