@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { getSupabase } from "../services/supabase.service";
 import { WhatsAppService } from "../services/whatsapp.service";
-import { GoogleGenAI } from "@google/genai";
 import { VIP_UNLIMITED_EMAILS } from "../../lib/constants";
 import { GeminiService } from "../services/gemini.service";
+import { AIOrchestratorService } from "../services/ai_orchestrator.service";
 import { OpenAIService } from "../services/openai.service";
 
 export const webhookRouter = Router();
@@ -22,7 +22,7 @@ webhookRouter.post('/', async (req, res) => {
                         const text = message.text?.body;
 
                         if (text) {
-                            console.log(`[WhatsApp] Recebida mensagem de ${from} para ${phoneNumberId}: ${text}`);
+                            console.log(`[WhatsApp] Recebida mensagem de ${from} para ${phoneNumberId}: ${text} `);
                             const supabase = getSupabase();
 
                             // 1. Validate Meta Phone Number & Org
@@ -48,7 +48,7 @@ webhookRouter.post('/', async (req, res) => {
                                 continue;
                             }
 
-                            const sessionId = `${org.id}_${from}`;
+                            const sessionId = `${org.id}_${from} `;
 
                             // 3. Upsert Chat Session
                             const { data: existingSession } = await supabase.from('chat_sessions').select('id, is_human_overflow').eq('id', sessionId).single();
@@ -89,22 +89,21 @@ webhookRouter.post('/', async (req, res) => {
 
                             const systemInstruction = `Você é ${agentName}, ${agentDescription}.
 DIRETRIZES FUNDAMENTAIS:
-1. FOCO TOTAL NO CONHECIMENTO: Você DEVE responder a *todas* as perguntas dos clientes com base ÚNICA E EXCLUSIVAMENTE na BASE DE CONHECIMENTO fornecida abaixo. NUNCA invente serviços, preços, regras de frete ou localizações que não estejam no texto.
-2. ATENDIMENTO HUMANO: Apenas transfira para o atendimento humano questões que você absolutamente não conseguir resolver com os dados fornecidos, ou situações *verdadeiramente sensíveis* (reclamações extremas, ameaças legais, problemas financeiros complexos).
-3. TEXTO LIMPO E PROFISSIONAL: Suas respostas devem ser impecáveis. Use formatação Markdown (*negrito*, listas) para facilitar a leitura. Evite parágrafos gigantes.
-4. TOM DE VOZ: Seja extremamente inteligente, educado, direto e acolhedor. Como parte da equipe da empresa, vista a camisa.
+1. FOCO TOTAL NO CONHECIMENTO: Você DEVE responder a * todas * as perguntas dos clientes com base ÚNICA E EXCLUSIVAMENTE na BASE DE CONHECIMENTO fornecida abaixo.NUNCA invente serviços, preços, regras de frete ou localizações que não estejam no texto.
+2. ATENDIMENTO HUMANO: Apenas transfira para o atendimento humano questões que você absolutamente não conseguir resolver com os dados fornecidos, ou situações * verdadeiramente sensíveis * (reclamações extremas, ameaças legais, problemas financeiros complexos).
+3. TEXTO LIMPO E PROFISSIONAL: Suas respostas devem ser impecáveis.Use formatação Markdown(* negrito *, listas) para facilitar a leitura.Evite parágrafos gigantes.
+4. TOM DE VOZ: Seja extremamente inteligente, educado, direto e acolhedor.Como parte da equipe da empresa, vista a camisa.
 5. EMOJIS: ${org.use_emojis ? "Use no máximo 1 ou 2 emojis por mensagem para manter a empatia." : "NÃO use emojis em nenhuma circunstância."}
 
-BASE DE CONHECIMENTO DA EMPRESA (Sua Única Fonte de Verdade):
+BASE DE CONHECIMENTO DA EMPRESA(Sua Única Fonte de Verdade):
 ------------------------
-${companyKnowledge || "A base de conhecimento desta empresa ainda não foi configurada. Informe gentilmente ao cliente que você ainda não tem as respostas e peça que aguarde um humano."}
+    ${companyKnowledge || "A base de conhecimento desta empresa ainda não foi configurada. Informe gentilmente ao cliente que você ainda não tem as respostas e peça que aguarde um humano."}
 ------------------------`;
 
-                            const response = await OpenAIService.generateChatResponse(
+                            const response = await AIOrchestratorService.generateChatResponse(
                                 systemInstruction,
                                 [], // Webhook current iteration starts without history memory. Real memory requires DB fetch.
-                                text,
-                                "gpt-4o-mini"
+                                text
                             );
 
                             const replyText = response.text || "Desculpe, não consegui entender.";

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { OpenAIService } from '../services/openai.service';
+import { AIOrchestratorService } from '../services/ai_orchestrator.service';
 import { getSupabase } from '../services/supabase.service';
 
 export const orionWebRouter = Router();
@@ -66,11 +66,10 @@ orionWebRouter.post('/chat', async (req, res) => {
             cleanHistory.shift();
         }
 
-        const response = await OpenAIService.generateChatResponse(
+        const response = await AIOrchestratorService.generateChatResponse(
             orionKnowledge,
             cleanHistory,
-            message,
-            "gpt-4o-mini"
+            message
         );
 
         res.json({ reply: response.text });

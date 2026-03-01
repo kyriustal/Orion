@@ -49,16 +49,8 @@ export class GeminiService {
             console.error("[GeminiService] Error generating response:", error);
 
             const errMsg = error?.message || "";
-            // Proteção e Feedback claro sobre a saúde da API
-            if (errMsg.includes("API key expired")) {
-                return { text: "❌ Erro Crítico: Sua GEMINI_API_KEY no arquivo .env expireu. Por favor, gere uma nova chave no Google AI Studio (aistudio.google.com) e atualize o seu .env." };
-            }
-            if (error?.status === 429 || errMsg.includes("Quota exceeded") || errMsg.includes("429")) {
-                return { text: "⚠️ Desculpe, o limite da cota gratuita foi atingido. Por favor, aguarde alguns instantes ou tente novamente mais tarde." };
-            }
-            if (error?.status === 404 || errMsg.includes("not found")) {
-                return { text: "❌ Erro de Configuração: O modelo de IA solicitado não foi encontrado ou não está disponível para esta chave API no momento." };
-            }
+            // Lançamos o erro para que o AIOrchestrator possa capturar e tentar o fallback
+            // se for erro de cota (429) ou chave (400) ou indisponibilidade (404/500/503)
             throw error;
         }
     }

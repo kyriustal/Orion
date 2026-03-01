@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getSupabase } from '../services/supabase.service';
-import { OpenAIService } from '../services/openai.service';
+import { AIOrchestratorService } from '../services/ai_orchestrator.service';
 import { Type } from '@google/genai';
 
 export const agentRouter = Router();
@@ -140,12 +140,11 @@ ${knowledgeContext || "Nenhum documento cadastrado ainda pela empresa. Avise o c
       cleanHistory.shift();
     }
 
-    // 4. Create chat and send message using our centralized REST fetch service
-    const response = await OpenAIService.generateChatResponse(
+    // 4. Create chat and send message using our centralized AI Orchestrator with Fallback
+    const response = await AIOrchestratorService.generateChatResponse(
       systemInstruction,
       cleanHistory,
       message,
-      "gpt-4o-mini",
       [transferToHumanDeclaration]
     );
 
