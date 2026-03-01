@@ -124,7 +124,7 @@ async function startServer() {
           }
 
           const chat = ai.chats.create({
-            model: "gemini-2.0-flash",
+            model: "gemini-2.0-flash-exp",
             config: {
               systemInstruction: `Você é o Orion, um Agente de Inteligência Artificial de elite, extremamente inteligente, conciso e profissional.
 DIRETRIZES FUNDAMENTAIS:

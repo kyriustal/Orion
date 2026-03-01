@@ -122,7 +122,7 @@ ${knowledgeContext || "Nenhum documento cadastrado ainda. Responda com informaç
 
     // 4. Create chat and send message
     const chat = ai.chats.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.0-flash-exp",
       config: {
         systemInstruction,
         temperature: 0.1,
