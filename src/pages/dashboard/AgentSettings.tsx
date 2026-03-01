@@ -31,7 +31,7 @@ export default function AgentSettings() {
     defaultValues: {
       name: "Assistente de Vendas",
       prompt: "Você é um assistente virtual de vendas. Seja educado, conciso e tente converter o lead.",
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       temperature: 0.3,
     },
   });
@@ -102,7 +102,7 @@ export default function AgentSettings() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-700">System Prompt</label>
-              <textarea 
+              <textarea
                 {...register("prompt")}
                 className="w-full h-40 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 resize-none"
                 placeholder="Descreva como o bot deve agir..."
@@ -119,11 +119,11 @@ export default function AgentSettings() {
               <CardDescription>Selecione o motor de processamento.</CardDescription>
             </CardHeader>
             <CardContent>
-              <select 
+              <select
                 {...register("model")}
                 className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
               >
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido e Barato)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (Rápido e Eficiente)</option>
                 <option value="gemini-1.5-pro">Gemini 1.5 Pro (Complexo e Preciso)</option>
               </select>
             </CardContent>
@@ -135,9 +135,9 @@ export default function AgentSettings() {
               <CardDescription>0 = Focado/Preciso, 1 = Criativo/Aleatório.</CardDescription>
             </CardHeader>
             <CardContent>
-              <input 
-                type="range" 
-                min="0" max="1" step="0.1" 
+              <input
+                type="range"
+                min="0" max="1" step="0.1"
                 {...register("temperature", { valueAsNumber: true })}
                 className="w-full accent-zinc-900"
               />
