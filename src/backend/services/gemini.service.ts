@@ -6,7 +6,7 @@ export class GeminiService {
     static getClient(): GoogleGenAI {
         if (!this.ai) {
             this.ai = new GoogleGenAI({
-                apiKey: process.env.GEMINI_API_KEY || "AIzaSyAwIN4X0wQkNQi8BdIyRfQ_FCgY1JmFzoM"
+                apiKey: process.env.GEMINI_API_KEY || ""
             });
         }
         return this.ai;
@@ -21,8 +21,6 @@ export class GeminiService {
         const ai = this.getClient();
 
         try {
-            // Revertendo para o modelo 2.0 que funcionou anteriormente, 
-            // gemini-1.5-flash está retornando 404 em alguns contextos beta do SDK @google/genai
             const chat = ai.chats.create({
                 model: "gemini-2.0-flash",
                 config: {

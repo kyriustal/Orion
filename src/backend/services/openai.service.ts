@@ -1,9 +1,8 @@
-import { GeminiService } from "./gemini.service";
 import { FunctionDeclaration } from "@google/genai";
 
-// OpenAIService atua como uma interface adaptadora, 
-// redirecionando todas as chamadas "gpt" para o GeminiService (modelo Flash 1.5)
-// já que a plataforma padronizou o uso do Google Gemini pela cota free e velocidade multimodais.
+// OpenAIService gerencia as chamadas para os modelos da OpenAI (GPT).
+// Agora possui implementação real via API para servir como fallback de alta confiabilidade
+// quando o provedor principal (Gemini) estiver indisponível.
 export class OpenAIService {
     /**
      * Implementação REAL da OpenAI para ser usada como Fallback.
