@@ -29,8 +29,8 @@ export default function AgentSettings() {
   } = useForm<AgentFormValues>({
     resolver: zodResolver(agentSchema),
     defaultValues: {
-      name: "Assistente de Vendas",
-      prompt: "Você é um assistente virtual de vendas. Seja educado, conciso e tente converter o lead.",
+      name: "Assistente Virtual",
+      prompt: "Você é um assistente corporativo de inteligência artificial. Seja educado, humano e ajude os clientes respondendo dúvidas de forma prática e objetiva baseando-se no contexto da empresa.",
       model: "gemini-2.0-flash",
       temperature: 0.3,
     },
@@ -95,7 +95,7 @@ export default function AgentSettings() {
               <input
                 {...register("name")}
                 className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
-                placeholder="Ex: Vendedor de Imóveis"
+                placeholder="Ex: Assistente de Suporte Avançado"
               />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
