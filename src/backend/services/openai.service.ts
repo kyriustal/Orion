@@ -10,10 +10,16 @@ export class OpenAIService {
 
         const messages = [
             { role: "system", content: systemInstruction },
-            ...history.map(h => ({
-                role: h.role === "model" ? "assistant" : "user",
-                content: h.parts[0].text
-            })),
+            ...history.map(h => {
+                let content = "";
+                if (typeof h.parts === 'string') content = h.parts;
+                else if (Array.isArray(h.parts)) content = h.parts[0]?.text || "";
+
+                return {
+                    role: h.role === "model" || h.role === "assistant" ? "assistant" : "user",
+                    content: content
+                };
+            }),
             { role: "user", content: message }
         ];
 
