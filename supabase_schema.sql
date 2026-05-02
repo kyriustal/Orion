@@ -73,12 +73,12 @@ CREATE TABLE IF NOT EXISTS public.knowledge_chunks (
     document_id BIGINT NOT NULL REFERENCES public.knowledge_documents(id) ON DELETE CASCADE,
     org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
-    embedding vector(1536),
+    embedding vector(768),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION match_knowledge_chunks (
-  query_embedding vector(1536),
+  query_embedding vector(768),
   match_threshold float,
   match_count int,
   p_org_id uuid

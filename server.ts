@@ -1,4 +1,7 @@
-import 'dotenv/config';
+import path from "path";
+import { fileURLToPath } from "url";
+import { existsSync } from "fs";
+import dotenv from 'dotenv';
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createServer } from "http";
@@ -21,12 +24,12 @@ import { orionWebRouter } from "./src/backend/api/orion-web";
 import { requireAuth } from "./src/backend/middleware/auth.middleware";
 import { AIOrchestratorService } from "./src/backend/services/ai_orchestrator.service";
 import { getSupabase } from "./src/backend/services/supabase.service";
-import path from "path";
-import { fileURLToPath } from "url";
-import { existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Carrega o .env usando caminho absoluto para garantir que funcione na Hostinger
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 async function startServer() {
   const app = express();
@@ -83,7 +86,29 @@ async function startServer() {
 
   // API Routes
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", message: "SaaS AI Agent Backend is running" });
+    res.json({
+      status: "ok",
+      mode: process.env.NODE_ENV || "development",
+      supabase: !!process.env.SUPABASE_URL,
+      time: new Date().toISOString()
+    });
+  });
+
+  // Rota de Debug Protegida por um Token Simples ou apenas para diagnóstico inicial
+  app.get("/api/debug-env", (req, res) => {
+    res.json({
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        PORT: process.env.PORT,
+        SUPABASE_URL_SET: !!process.env.SUPABASE_URL,
+        SUPABASE_KEY_SET: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        GEMINI_KEY_SET: !!process.env.GEMINI_API_KEY,
+        JWT_SECRET_SET: !!process.env.JWT_SECRET,
+        CWD: process.cwd(),
+        DIRNAME: __dirname
+      },
+      dist_exists: existsSync(path.resolve(__dirname, 'dist'))
+    });
   });
 
   app.use("/api/webhook", webhookRouter);

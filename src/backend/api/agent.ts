@@ -2,26 +2,48 @@ import { Router } from 'express';
 import { getSupabase } from '../services/supabase.service';
 import { AIOrchestratorService } from '../services/ai_orchestrator.service';
 import { GeminiService } from '../services/gemini.service';
+import { AutomationService } from '../services/automation.service';
 
 export const agentRouter = Router();
 
 agentRouter.post('/simulate', async (req, res) => {
-    const { message, history, config } = req.body;
+    const { message, history } = req.body;
     const org_id = (req as any).user?.org_id;
 
     try {
         const supabase = getSupabase();
 
+        // 0. Busca Dados da Organização para Contexto
+        const { data: org } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', org_id)
+            .single();
+
+        // 0.1 Tenta disparar Automação primeiro
+        const triggeredAuto = await AutomationService.triggerAutomation(org_id, message);
+        if (triggeredAuto) {
+            const actionResult = await AutomationService.executeAction(triggeredAuto, { org_id });
+            if (actionResult && actionResult.reply) {
+                return res.json({ 
+                    reply: actionResult.reply, 
+                    automation_triggered: triggeredAuto.name 
+                });
+            }
+        }
+
         // 1. Busca RAG (Vetorial) Real
         let knowledge = "";
         try {
             const embedding = await GeminiService.generateEmbeddings(message);
-            const { data: chunks } = await supabase.rpc('match_knowledge_chunks', {
+            const { data: chunks, error: rpcError } = await supabase.rpc('match_knowledge_chunks', {
                 query_embedding: embedding,
-                match_threshold: 0.5,
+                match_threshold: 0.3, // Reduzido para ser mais permissivo
                 match_count: 5,
                 p_org_id: org_id
             });
+
+            if (rpcError) throw rpcError;
 
             if (chunks && chunks.length > 0) {
                 knowledge = chunks.map((c: any) => c.content).join("\n\n---\n\n");
@@ -29,24 +51,33 @@ agentRouter.post('/simulate', async (req, res) => {
             }
         } catch (ragError) {
             console.error("RAG Error in Simulation:", ragError);
-            // Fallback para busca textual simples se RPC falhar
-            const { data: docs } = await supabase.from('knowledge_documents').select('content').eq('org_id', org_id);
-            if (docs) knowledge = docs.map(d => d.content).join("\n\n");
+            // Fallback para descrição do produto se RAG falhar
+            knowledge = org?.product_description || "";
         }
 
-        // 2. Definir Persona
-        const systemInstruction = `Você é o agente de inteligência artificial chamado ${config?.name || "Orion"}.
-        Sua descrição/personalidade: ${config?.description || "Um assistente profissional e prestativo"}.
-        
-        BASE DE CONHECIMENTO:
-        ${knowledge || "Não há documentos específicos para esta empresa ainda. Responda com base no seu conhecimento geral, mas de forma profissional."}
-        
-        REGRAS:
-        - Seja conciso e direto.
-        - Use formatação Markdown.
-        - Responda sempre em Português.`;
+        // 2. Definir Persona e Contexto
+        const botName = org?.chatbot_name || "Orion";
+        const companyName = org?.name || "nossa empresa";
+        const dateStr = new Date().toLocaleDateString('pt-BR');
 
-        // 3. Gerar Resposta via Orquestrador (Gemini -> OpenAI Fallback)
+        const systemInstruction = `Você é o assistente virtual de IA chamado ${botName}, trabalhando para ${companyName}.
+        Hoje é dia ${dateStr}.
+        
+        CONTEXTO DA EMPRESA:
+        ${org?.product_description || "Uma empresa profissional focada em excelência."}
+        
+        BASE DE CONHECIMENTO ESPECÍFICA (RAG):
+        ${knowledge || "Não há documentos adicionais. Use o contexto da empresa acima."}
+        
+        REGRAS DE OURO:
+        - Responda SEMPRE em Português de Portugal ou Brasil conforme o cliente.
+        - Se não souber a resposta na base de conhecimento, peça para o cliente aguardar um atendente humano de forma gentil.
+        - Use emojis se configurado (Configuração: ${org?.use_emojis ? 'ATIVADO' : 'DESATIVADO'}).
+        - Mantenha um tom profissional mas acolhedor.
+        - NUNCA invente preços ou políticas que não estejam no texto acima.
+        - Use formatação Markdown (negrito, listas) para facilitar a leitura.`;
+
+        // 3. Gerar Resposta via Orquestrador
         const response = await AIOrchestratorService.generateChatResponse(
             systemInstruction,
             history || [],

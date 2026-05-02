@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Bot, Smartphone, LayoutDashboard, BookOpen, MessageSquare, CreditCard, Settings, Megaphone, Users, BarChart, LogOut, UserCircle, PlayCircle, Menu, X } from 'lucide-react';
+import { Bot, Smartphone, LayoutDashboard, BookOpen, MessageSquare, CreditCard, Settings, Megaphone, Users, BarChart, LogOut, UserCircle, PlayCircle, Menu, X, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -38,6 +38,7 @@ export default function DashboardLayout() {
     { name: 'Base de Conhecimento', path: '/dashboard/knowledge', icon: BookOpen },
     { name: 'Live Chat', path: '/dashboard/live-chat', icon: MessageSquare },
     { name: 'Campanhas', path: '/dashboard/campaigns', icon: Megaphone },
+    { name: 'Automações', path: '/dashboard/automations', icon: Zap },
     { name: 'Templates (HSM)', path: '/dashboard/templates', icon: MessageSquare },
     { name: 'Insights & Sentimento', path: '/dashboard/insights', icon: BarChart },
     { name: 'Equipe', path: '/dashboard/team', icon: Users },

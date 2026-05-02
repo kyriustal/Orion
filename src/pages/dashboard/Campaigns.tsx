@@ -32,7 +32,7 @@ export default function Campaigns() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer mock-jwt-token"
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify(newCampaign)
       });

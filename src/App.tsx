@@ -18,6 +18,7 @@ import Team from './pages/dashboard/Team';
 import Billing from './pages/dashboard/Billing';
 import Settings from './pages/dashboard/Settings';
 import Simulation from './pages/dashboard/Simulation';
+import Automations from './pages/dashboard/Automations';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="team" element={<Team />} />
             <Route path="billing" element={<Billing />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="automations" element={<Automations />} />
           </Route>
         </Route>
       </Routes>

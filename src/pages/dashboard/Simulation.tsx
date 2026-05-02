@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { Send, User, Bot, RefreshCw } from "lucide-react";
+import { Send, User, Bot, RefreshCw, Zap } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -26,7 +26,25 @@ export default function Simulation() {
       try {
         const token = localStorage.getItem("token");
 
-        // Tentamos buscar primeiro a configuração específica do WhatsApp
+        // 1. Buscamos primeiro as configurações gerais (AI Name)
+        const response = await fetch("/api/settings/org", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const name = data.chatbot_name || "Orion Bot";
+            setBotName(name);
+            setMessages([{ 
+                id: 1, 
+                sender: "bot", 
+                text: `Olá! Sou o **${name}**, o assistente virtual inteligente da **${data.name || 'nossa empresa'}**. Como posso te ajudar hoje?`, 
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+            }]);
+            return;
+        }
+
+        // 2. Fallback para WhatsApp Config
         const waResponse = await fetch("/api/whatsapp/config", {
           headers: { "Authorization": `Bearer ${token}` }
         });
@@ -40,17 +58,7 @@ export default function Simulation() {
           }
         }
 
-        // Fallback antigo via Auth
-        const authResponse = await fetch("/api/auth/me", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const authData = await authResponse.json();
-        if (authData.user && authData.user.chatbot_name) {
-          setBotName(authData.user.chatbot_name);
-          setMessages([{ id: 1, sender: "bot", text: `Olá! Sou o ${authData.user.chatbot_name}. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-        } else {
-          setMessages([{ id: 1, sender: "bot", text: `Olá! Sou o assistente virtual da Orion. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-        }
+        setMessages([{ id: 1, sender: "bot", text: `Olá! Sou o assistente virtual da Orion. Como posso te ajudar hoje?`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
       } catch (err) {
         console.error("Erro ao carregar dados do bot:", err);
       }
@@ -106,6 +114,12 @@ export default function Simulation() {
         text: data.reply,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
+
+      if (data.automation_triggered) {
+        toast.success(`Automação disparada: ${data.automation_triggered}`, {
+            icon: <Zap className="w-4 h-4 text-amber-500" />
+        });
+      }
 
       if (data.transfer) {
         toast.info("A IA solicitou transferência para um atendente humano.");

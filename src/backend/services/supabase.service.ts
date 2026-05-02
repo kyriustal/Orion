@@ -8,12 +8,29 @@ export function getSupabase(): SupabaseClient {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
     if (!url || !key) {
-      console.error('CRITICAL: Supabase environment variables (URL or KEY) are missing!');
-      console.warn('Backend will use MOCK data. Login will FAIL.');
-      // ... (mock implementation remains same) ...
+      const missing = [];
+      if (!url) missing.push('SUPABASE_URL');
+      if (!key) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+      
+      console.error(`CRITICAL: Supabase environment variables are missing: ${missing.join(', ')}`);
+      console.warn('Backend will use MOCK data. Login will FAIL. Please check your Hostinger Environment Variables.');
+      
       return {
         from: () => ({
-          select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: { message: 'SUPABASE_KEYS_MISSING' } }), order: () => ({ limit: () => ({ data: [] }) }) }) }),
+          select: () => ({ 
+            eq: () => ({ 
+              single: () => Promise.resolve({ 
+                data: null, 
+                error: { 
+                  message: `SUPABASE_KEYS_MISSING: ${missing.join(', ')}`,
+                  code: 'MISSING_ENV'
+                } 
+              }), 
+              order: () => ({ 
+                limit: () => ({ data: [] }) 
+              }) 
+            }) 
+          }),
           insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: { id: 'mock' } }) }), then: (cb: any) => cb({ data: null }) }),
           update: () => ({ eq: () => ({ then: (cb: any) => cb({ data: null }) }) })
         })
