@@ -1,0 +1,16 @@
+# Orion 2 - Hostinger Node.js Configuration
+# Este arquivo diz a Hostinger para rodar o Node.js
+
+<IfModule mod_passenger.c>
+    PassengerAppEnv production
+    PassengerAppRoot /home/uXXXXXXX/domains/seu-dominio.com/public_html
+    PassengerBaseURI /
+    PassengerAppType node
+    PassengerStartupFile app.js
+</IfModule>
+
+RewriteEngine On
+RewriteRule ^app\.js$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule (.*) app.js [L]
