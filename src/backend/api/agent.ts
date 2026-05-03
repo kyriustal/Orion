@@ -10,17 +10,19 @@ agentRouter.post('/simulate', async (req, res) => {
     const { message, history } = req.body;
     const org_id = (req as any).user?.org_id;
 
+    if (!org_id) return res.status(401).json({ error: "Nao autorizado" });
+
     try {
         const supabase = getSupabase();
 
-        // 0. Busca Dados da Organização para Contexto
+        // 1. Busca Dados da Organizacao
         const { data: org } = await supabase
             .from('organizations')
             .select('*')
             .eq('id', org_id)
             .single();
 
-        // 0.1 Tenta disparar Automação primeiro
+        // 2. Tenta disparar Automação primeiro (Trigger Rápido)
         const triggeredAuto = await AutomationService.triggerAutomation(org_id, message);
         if (triggeredAuto) {
             const actionResult = await AutomationService.executeAction(triggeredAuto, { org_id });
@@ -32,52 +34,44 @@ agentRouter.post('/simulate', async (req, res) => {
             }
         }
 
-        // 1. Busca RAG (Vetorial) Real
+        // 3. Busca Conhecimento (RAG)
         let knowledge = "";
         try {
             const embedding = await GeminiService.generateEmbeddings(message);
-            const { data: chunks, error: rpcError } = await supabase.rpc('match_knowledge_chunks', {
+            const { data: chunks } = await supabase.rpc('match_knowledge_chunks', {
                 query_embedding: embedding,
-                match_threshold: 0.3, // Reduzido para ser mais permissivo
+                match_threshold: 0.3,
                 match_count: 5,
                 p_org_id: org_id
             });
 
-            if (rpcError) throw rpcError;
-
             if (chunks && chunks.length > 0) {
                 knowledge = chunks.map((c: any) => c.content).join("\n\n---\n\n");
-                console.log(`[Simulation RAG] Encontrados ${chunks.length} chunks.`);
             }
         } catch (ragError) {
-            console.error("RAG Error in Simulation:", ragError);
-            // Fallback para descrição do produto se RAG falhar
+            console.warn("RAG Fallback triggered:", ragError);
             knowledge = org?.product_description || "";
         }
 
-        // 2. Definir Persona e Contexto
+        // 4. Instruções do Sistema (Persona)
         const botName = org?.chatbot_name || "Orion";
-        const companyName = org?.name || "nossa empresa";
-        const dateStr = new Date().toLocaleDateString('pt-BR');
+        const companyName = org?.name || "Nossa Empresa";
+        
+        const systemInstruction = `Voce e o assistente virtual ${botName} da empresa ${companyName}.
+        
+        CONTEXTO EMPRESARIAL:
+        ${org?.product_description || "Atendimento profissional e eficiente."}
+        
+        CONHECIMENTO ADICIONAL:
+        ${knowledge || "Sem documentos adicionais."}
+        
+        REGRAS:
+        - Responda de forma curta e objetiva.
+        - Se nao souber, diga que vai transferir para um humano.
+        - Use emojis: ${org?.use_emojis ? "SIM" : "NAO"}.
+        - Tom de voz: Profissional e Acolhedor.`;
 
-        const systemInstruction = `Você é o assistente virtual de IA chamado ${botName}, trabalhando para ${companyName}.
-        Hoje é dia ${dateStr}.
-        
-        CONTEXTO DA EMPRESA:
-        ${org?.product_description || "Uma empresa profissional focada em excelência."}
-        
-        BASE DE CONHECIMENTO ESPECÍFICA (RAG):
-        ${knowledge || "Não há documentos adicionais. Use o contexto da empresa acima."}
-        
-        REGRAS DE OURO:
-        - Responda SEMPRE em Português de Portugal ou Brasil conforme o cliente.
-        - Se não souber a resposta na base de conhecimento, peça para o cliente aguardar um atendente humano de forma gentil.
-        - Use emojis se configurado (Configuração: ${org?.use_emojis ? 'ATIVADO' : 'DESATIVADO'}).
-        - Mantenha um tom profissional mas acolhedor.
-        - NUNCA invente preços ou políticas que não estejam no texto acima.
-        - Use formatação Markdown (negrito, listas) para facilitar a leitura.`;
-
-        // 3. Gerar Resposta via Orquestrador
+        // 5. Gerar Resposta IA
         const response = await AIOrchestratorService.generateChatResponse(
             systemInstruction,
             history || [],
@@ -86,7 +80,7 @@ agentRouter.post('/simulate', async (req, res) => {
 
         res.json({ reply: response.text });
     } catch (error: any) {
-        console.error("Erro na simulação:", error);
-        res.status(500).json({ error: "Erro na simulação: " + error.message });
+        console.error("[Agent API] Erro critico:", error);
+        res.status(500).json({ error: "Erro interno no servidor de IA." });
     }
 });

@@ -1,27 +1,39 @@
-import { GeminiService } from "./gemini.service";
-import { OpenAIService } from "./openai.service";
+import { GeminiService } from './gemini.service';
+import { OpenAIService } from './openai.service';
 
 export class AIOrchestratorService {
+    /**
+     * Gera resposta de chat usando Gemini com fallback para OpenAI.
+     */
     static async generateChatResponse(
         systemInstruction: string,
         history: any[],
-        message: string,
-        tools: any[] = []
-    ): Promise<{ text: string; functionCalls?: any[] }> {
+        message: string
+    ): Promise<{ text: string }> {
+        console.log("[AI Orchestrator] Gerando resposta...");
+
+        // 1. Tentar Gemini primeiro (Mais rapido e barato)
         try {
-            return await GeminiService.generateChatResponse(systemInstruction, history, message, tools);
-        } catch (error: any) {
-            console.warn("[AIOrchestrator] Falha no Gemini, tentando OpenAI Fallback...", error.message);
-
-            if (!process.env.OPENAI_API_KEY) {
-                return { text: "⚠️ O serviço de IA está instável. Por favor, tente novamente em instantes." };
-            }
-
+            const response = await GeminiService.generateChatResponse(
+                systemInstruction,
+                history,
+                message
+            );
+            return response;
+        } catch (geminiError: any) {
+            console.warn("[AI Orchestrator] Gemini falhou, tentando OpenAI...", geminiError.message);
+            
+            // 2. Fallback para OpenAI
             try {
-                return await OpenAIService.generateChatResponseReal(systemInstruction, history, message);
-            } catch (fallbackError: any) {
-                console.error("[AIOrchestrator] Falha Total:", fallbackError.message);
-                return { text: "❌ Motores de IA indisponíveis no momento." };
+                const response = await OpenAIService.generateChatResponseReal(
+                    systemInstruction,
+                    history,
+                    message
+                );
+                return response;
+            } catch (openaiError: any) {
+                console.error("[AI Orchestrator] Ambos os modelos falharam!");
+                return { text: "Desculpe, estou enfrentando instabilidade momentanea. Por favor, tente novamente em instantes." };
             }
         }
     }
