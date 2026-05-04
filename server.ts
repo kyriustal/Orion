@@ -6,7 +6,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-// APIs do Sistema
+// APIs
 import { webhookRouter } from "./src/backend/api/webhook";
 import { authRouter } from "./src/backend/api/auth";
 import { dashboardRouter } from "./src/backend/api/dashboard";
@@ -23,70 +23,45 @@ import { templatesRouter } from "./src/backend/api/templates";
 import { orionWebRouter } from "./src/backend/api/orion-web";
 import { requireAuth } from "./src/backend/middleware/auth.middleware";
 
-// Serviços
-import { AIOrchestratorService } from "./src/backend/services/ai_orchestrator.service";
-import { getSupabase } from "./src/backend/services/supabase.service";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Carregamento de Ambiente
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// Garante que o .env seja lido independente de onde o processo comece
+const envPath = path.resolve(__dirname, '.env');
+dotenv.config({ path: envPath });
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3001;
   const httpServer = createServer(app);
 
-  // Socket.io (Live Chat)
   const io = new Server(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] }
   });
 
   io.on("connection", (socket) => {
     socket.on("join_chat", (id) => socket.join(id));
-    socket.on("send_message", async (data) => {
-      io.to(data.chatId).emit("new_message", data);
-      
-      // Resposta Automática da IA no Live Chat
-      if (data.message.sender === "user" && data.isAiActive) {
-        try {
-          const systemInstruction = `Voce e o Orion. Responda como o assistente oficial.`;
-          const response = await AIOrchestratorService.generateChatResponse(systemInstruction, [], data.message.text);
-          
-          io.to(data.chatId).emit("new_message", {
-            chatId: data.chatId,
-            message: { id: Date.now(), sender: "bot", text: response.text, time: new Date().toLocaleTimeString() }
-          });
-        } catch (e) { console.error("Erro IA LiveChat:", e); }
-      }
-    });
   });
 
   app.use(express.json());
 
-  // Diagnóstico
-  app.get("/api/health", (req, res) => res.json({ status: "ok", version: "2.1.0", time: new Date() }));
-
-  // Rotas Publicas
+  // Rotas
   app.use("/api/auth", authRouter);
   app.use("/api/webhook", webhookRouter);
+  app.use("/api/agent", requireAuth, agentRouter);
+  app.use("/api/automations", requireAuth, automationsRouter);
   app.use("/api/orion-web", orionWebRouter);
-
-  // Rotas Privadas (Dashboard)
   app.use("/api/dashboard", requireAuth, dashboardRouter);
   app.use("/api/whatsapp", requireAuth, whatsappRouter);
-  app.use("/api/agent", requireAuth, agentRouter);
   app.use("/api/chats", requireAuth, chatsRouter);
-  app.use("/api/automations", requireAuth, automationsRouter);
-  app.use("/api/subscriptions", requireAuth, subscriptionsRouter);
   app.use("/api/knowledge", requireAuth, knowledgeRouter);
   app.use("/api/billing", requireAuth, billingRouter);
   app.use("/api/team", requireAuth, teamRouter);
   app.use("/api/templates", requireAuth, templatesRouter);
   app.use("/api/settings", requireAuth, settingsRouter);
+  app.use("/api/subscriptions", requireAuth, subscriptionsRouter);
 
-  // Servir Frontend
+  // Servir Frontend (Prioridade Máxima)
   const distPath = path.resolve(__dirname, 'dist');
   if (existsSync(distPath)) {
     app.use(express.static(distPath));
@@ -95,13 +70,17 @@ async function startServer() {
         res.sendFile(path.join(distPath, 'index.html'));
       }
     });
+  } else {
+    console.warn("[AVISO] Pasta 'dist' nao encontrada. O Frontend nao sera servido!");
   }
 
   httpServer.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`[Orion 2] Servidor Online na porta ${PORT}`);
-    // Cron Jobs
+    console.log(`[ORION] Servidor rodando na porta ${PORT}`);
+    // Cron Jobs em background
     import("./src/backend/services/cron.service").then(m => m.startDailyCronJobs()).catch(() => {});
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error("ERRO AO INICIAR SERVIDOR:", err);
+});
