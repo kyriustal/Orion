@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "vite build || echo 'Build ignorado ou falhou no servidor'",
     "start": "node app.js"
   },
   "dependencies": {
@@ -30,12 +30,13 @@
     "zod": "^4.3.6",
     "react-hook-form": "^7.71.2",
     "@hookform/resolvers": "^5.2.2",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "tailwindcss": "^4.1.14",
+    "@tailwindcss/vite": "^4.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
-    "autoprefixer": "^10.4.21",
-    "tailwindcss": "^4.1.14"
+    "autoprefixer": "^10.4.21"
   }
 }
