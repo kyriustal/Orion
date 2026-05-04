@@ -100,6 +100,16 @@ io.on("connection", (socket) => {
 });
 
 // Iniciar Servidor
-httpServer.listen(Number(PORT), "0.0.0.0", () => {
-  console.log(`🚀 Servidor Orion 1.0 (PROD) rodando na porta ${PORT}`);
-});
+const isSocket = isNaN(Number(PORT));
+
+if (isSocket) {
+  // Se for um Socket Unix (comum na Hostinger/Passenger), não passamos o host "0.0.0.0"
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 Servidor Orion 1.0 (PROD) rodando no socket: ${PORT}`);
+  });
+} else {
+  // Se for um número de porta padrão
+  httpServer.listen(Number(PORT), "0.0.0.0", () => {
+    console.log(`🚀 Servidor Orion 1.0 (PROD) rodando na porta: ${PORT}`);
+  });
+}
