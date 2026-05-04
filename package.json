@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "tsx server.ts",
     "build": "vite build",
-    "start": "node server.js"
+    "start": "node --loader ts-node/esm server.ts"
   },
   "dependencies": {
     "@google/genai": "^1.43.0",

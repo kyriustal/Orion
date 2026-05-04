@@ -1,5 +1,4 @@
-# Orion 2 - Hostinger Apache Configuration
-# Forca todas as requisicoes para o app.js (Node.js)
+# Orion 2 - Hostinger Configuration (Stable)
 
 <IfModule mod_passenger.c>
     PassengerAppEnv production
