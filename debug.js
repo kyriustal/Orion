@@ -1,1 +1,1 @@
-// Arquivo deletado.
+// Removido durante a restauração.

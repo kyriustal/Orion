@@ -6,7 +6,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-// Importação dos serviços e rotas
+// APIs do Sistema
 import { webhookRouter } from "./src/backend/api/webhook";
 import { authRouter } from "./src/backend/api/auth";
 import { dashboardRouter } from "./src/backend/api/dashboard";
@@ -23,10 +23,14 @@ import { templatesRouter } from "./src/backend/api/templates";
 import { orionWebRouter } from "./src/backend/api/orion-web";
 import { requireAuth } from "./src/backend/middleware/auth.middleware";
 
+// Serviços
+import { AIOrchestratorService } from "./src/backend/services/ai_orchestrator.service";
+import { getSupabase } from "./src/backend/services/supabase.service";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Carregamento robusto do .env
+// Carregamento de Ambiente
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 async function startServer() {
@@ -34,37 +38,42 @@ async function startServer() {
   const PORT = process.env.PORT || 3001;
   const httpServer = createServer(app);
 
-  // Configuração Socket.io para Live Chat
+  // Socket.io (Live Chat)
   const io = new Server(httpServer, {
     cors: { origin: "*", methods: ["GET", "POST"] }
   });
 
   io.on("connection", (socket) => {
     socket.on("join_chat", (id) => socket.join(id));
-    socket.on("send_message", (data) => {
-        io.to(data.chatId).emit("new_message", data);
+    socket.on("send_message", async (data) => {
+      io.to(data.chatId).emit("new_message", data);
+      
+      // Resposta Automática da IA no Live Chat
+      if (data.message.sender === "user" && data.isAiActive) {
+        try {
+          const systemInstruction = `Voce e o Orion. Responda como o assistente oficial.`;
+          const response = await AIOrchestratorService.generateChatResponse(systemInstruction, [], data.message.text);
+          
+          io.to(data.chatId).emit("new_message", {
+            chatId: data.chatId,
+            message: { id: Date.now(), sender: "bot", text: response.text, time: new Date().toLocaleTimeString() }
+          });
+        } catch (e) { console.error("Erro IA LiveChat:", e); }
+      }
     });
   });
 
-  // Middlewares essenciais
   app.use(express.json());
 
-  // Rota de Diagnóstico (Vital para Hostinger)
-  app.get("/api/health", (req, res) => {
-    res.json({
-      status: "online",
-      env_supabase: !!process.env.SUPABASE_URL,
-      node_version: process.version,
-      uptime: process.uptime()
-    });
-  });
+  // Diagnóstico
+  app.get("/api/health", (req, res) => res.json({ status: "ok", version: "2.1.0", time: new Date() }));
 
-  // Rotas da API
-  app.use("/api/webhook", webhookRouter);
+  // Rotas Publicas
   app.use("/api/auth", authRouter);
+  app.use("/api/webhook", webhookRouter);
   app.use("/api/orion-web", orionWebRouter);
-  
-  // Rotas Protegidas
+
+  // Rotas Privadas (Dashboard)
   app.use("/api/dashboard", requireAuth, dashboardRouter);
   app.use("/api/whatsapp", requireAuth, whatsappRouter);
   app.use("/api/agent", requireAuth, agentRouter);
@@ -77,30 +86,22 @@ async function startServer() {
   app.use("/api/templates", requireAuth, templatesRouter);
   app.use("/api/settings", requireAuth, settingsRouter);
 
-  // Entrega do Frontend (Pasta dist)
+  // Servir Frontend
   const distPath = path.resolve(__dirname, 'dist');
   if (existsSync(distPath)) {
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      // Se não for uma rota de API, entrega o index.html (Single Page App)
       if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(distPath, 'index.html'));
       }
     });
   }
 
-  // Inicialização do Servidor
   httpServer.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`[Orion] Servidor iniciado na porta ${PORT}`);
-    
-    // Iniciar Cron Jobs (envios agendados, etc)
-    import("./src/backend/services/cron.service")
-      .then(m => m.startDailyCronJobs())
-      .catch(err => console.error("Falha ao iniciar Cron:", err));
+    console.log(`[Orion 2] Servidor Online na porta ${PORT}`);
+    // Cron Jobs
+    import("./src/backend/services/cron.service").then(m => m.startDailyCronJobs()).catch(() => {});
   });
 }
 
-startServer().catch(err => {
-    console.error("ERRO FATAL NA INICIALIZACAO:", err);
-    process.exit(1);
-});
+startServer();
