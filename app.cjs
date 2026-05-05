@@ -42,6 +42,17 @@ if (!fs.existsSync(tsxPath)) {
     startupError = 'O executável TSX não foi encontrado em node_modules/tsx. Por favor, instale as dependências na Hostinger.';
     serveError(startupError);
 } else {
+    // CORREÇÃO PARA EACCES: Tentar dar permissão ao esbuild
+    try {
+        const esbuildPath = path.join(__dirname, 'node_modules', '@esbuild', 'linux-x64', 'bin', 'esbuild');
+        if (fs.existsSync(esbuildPath)) {
+            execSync(`chmod +x "${esbuildPath}"`);
+            console.log('Permissão concedida ao esbuild.');
+        }
+    } catch (e) {
+        console.warn('Falha ao tentar dar permissão ao esbuild (isso pode ser normal):', e.message);
+    }
+
     // 2. Tentar rodar o Orion
     console.log('Tentando spawnar Orion...');
     const child = spawn(process.execPath, [tsxPath, serverPath], {
