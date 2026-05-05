@@ -10,14 +10,26 @@ import { Server } from "socket.io";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Carregar .env com caminho absoluto (Vital para Hostinger)
-const envPath = path.resolve(__dirname, '.env');
-if (existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-  console.log('✅ Arquivo .env carregado de:', envPath);
-} else {
-  console.warn('⚠️ Arquivo .env não encontrado em:', envPath);
-  dotenv.config(); // Fallback para o padrão
+// Carregar .env de múltiplos caminhos possíveis (Hostinger)
+const possibleEnvPaths = [
+  path.resolve(__dirname, '.env'),
+  path.resolve(process.cwd(), '.env'),
+  path.join(__dirname, '..', '.env')
+];
+
+let envFound = false;
+for (const p of possibleEnvPaths) {
+  if (existsSync(p)) {
+    dotenv.config({ path: p });
+    console.log('✅ Arquivo .env carregado de:', p);
+    envFound = true;
+    break;
+  }
+}
+
+if (!envFound) {
+  console.warn('⚠️ Nenhum arquivo .env encontrado. Usando variáveis de ambiente do sistema.');
+  dotenv.config();
 }
 
 // Importações das APIs
@@ -100,24 +112,20 @@ io.on("connection", (socket) => {
 });
 
 // Iniciar Servidor
-const isSocket = isNaN(Number(PORT));
-
-if (isSocket) {
-  // Se for um Socket Unix (comum na Hostinger/Passenger), não passamos o host "0.0.0.0"
-  httpServer.listen(PORT, () => {
-    console.log(`--------------------------------------------------`);
-    console.log(`🚀 ORION 2 - SISTEMA ONLINE`);
-    console.log(`📍 Ambiente: Produção (Hostinger)`);
-    console.log(`🔌 Socket: ${PORT}`);
-    console.log(`--------------------------------------------------`);
-  });
+// Na Hostinger/Passenger, DEVEMOS priorizar o que está no process.env.PORT
+// e não forçar "0.0.0.0" se for um socket.
+if (process.env.PORT) {
+    httpServer.listen(process.env.PORT, () => {
+        console.log(`--------------------------------------------------`);
+        console.log(`🚀 ORION 2 - SISTEMA ONLINE (PASSENGER)`);
+        console.log(`🔌 Escutando em: ${process.env.PORT}`);
+        console.log(`--------------------------------------------------`);
+    });
 } else {
-  // Se for um número de porta padrão
-  httpServer.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`--------------------------------------------------`);
-    console.log(`🚀 ORION 2 - SISTEMA ONLINE`);
-    console.log(`📍 Ambiente: Produção (Local/Port)`);
-    console.log(`🔌 Porta: ${PORT}`);
-    console.log(`--------------------------------------------------`);
-  });
+    httpServer.listen(Number(PORT), "0.0.0.0", () => {
+        console.log(`--------------------------------------------------`);
+        console.log(`🚀 ORION 2 - SISTEMA ONLINE (LOCAL)`);
+        console.log(`🔌 Porta: ${PORT}`);
+        console.log(`--------------------------------------------------`);
+    });
 }
