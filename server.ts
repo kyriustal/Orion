@@ -105,11 +105,19 @@ const isSocket = isNaN(Number(PORT));
 if (isSocket) {
   // Se for um Socket Unix (comum na Hostinger/Passenger), não passamos o host "0.0.0.0"
   httpServer.listen(PORT, () => {
-    console.log(`🚀 Servidor Orion 1.0 (PROD) rodando no socket: ${PORT}`);
+    console.log(`--------------------------------------------------`);
+    console.log(`🚀 ORION 2 - SISTEMA ONLINE`);
+    console.log(`📍 Ambiente: Produção (Hostinger)`);
+    console.log(`🔌 Socket: ${PORT}`);
+    console.log(`--------------------------------------------------`);
   });
 } else {
   // Se for um número de porta padrão
   httpServer.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`🚀 Servidor Orion 1.0 (PROD) rodando na porta: ${PORT}`);
+    console.log(`--------------------------------------------------`);
+    console.log(`🚀 ORION 2 - SISTEMA ONLINE`);
+    console.log(`📍 Ambiente: Produção (Local/Port)`);
+    console.log(`🔌 Porta: ${PORT}`);
+    console.log(`--------------------------------------------------`);
   });
 }
