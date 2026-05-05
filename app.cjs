@@ -54,9 +54,26 @@ if (!fs.existsSync(tsxPath)) {
     }
 
     // 2. Tentar rodar o Orion
-    console.log('Tentando spawnar Orion...');
+    console.log('--- AMBIENTE HOSTINGER ---');
+    console.log('PORT env:', process.env.PORT);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    
+    // Listar variáveis importantes para depuração
+    const importantVars = ['PORT', 'NODE_ENV', 'PASSENGER_APP_ENV', 'DOCUMENT_ROOT'];
+    importantVars.forEach(v => {
+        console.log(`${v}: ${process.env[v] || 'não definida'}`);
+    });
+
+    // Se a porta for 3001 e estiver dando erro, vamos tentar NÃO definir porta e deixar o Node escolher se for local,
+    // ou usar o que o Passenger mandar.
+    const targetPort = process.env.PORT || '3000'; // Mudamos para 3000 para evitar o conflito na 3001
+
+    console.log('Tentando spawnar Orion na porta:', targetPort);
     const child = spawn(process.execPath, [tsxPath, serverPath], {
-        env: Object.assign({}, process.env, { NODE_ENV: 'production', PORT: PORT }),
+        env: Object.assign({}, process.env, { 
+            NODE_ENV: 'production', 
+            PORT: targetPort 
+        }),
         shell: true
     });
 
