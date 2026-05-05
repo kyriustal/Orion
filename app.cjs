@@ -1,111 +1,61 @@
-const { spawn, execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
 
-const PORT = process.env.PORT || 3001;
-let startupError = '';
-let isStarting = true;
+console.log('--- ORION 2: UNIFIED LAUNCHER ---');
+console.log('CWD:', process.cwd());
+console.log('ENV PORT:', process.env.PORT);
 
-console.log('--- DEBUG LAUNCHER ACTIVE ---');
-
-const serverPath = path.join(__dirname, 'server.ts');
-const tsxPath = path.join(__dirname, 'node_modules', 'tsx', 'dist', 'cli.mjs');
-
-// Função para mostrar erro no navegador caso o Orion falhe
-function serveError(errorMsg) {
-    const server = http.createServer((req, res) => {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`
-            <div style="font-family: sans-serif; padding: 20px; border: 5px solid red; border-radius: 10px;">
-                <h1 style="color: red;">❌ Falha ao Iniciar Orion 2</h1>
-                <p>O processo Node.js encontrou um erro durante a inicialização:</p>
-                <pre style="background: #eee; padding: 15px; border-radius: 5px; overflow-x: auto;">${errorMsg}</pre>
-                <hr>
-                <p><b>Dica:</b> Geralmente isso é causado por falta de módulos. Tente rodar <code>npm install</code> no terminal SSH ou no painel da Hostinger.</p>
-                <button onclick="location.reload()">Tentar Novamente</button>
-            </div>
-        `);
-    });
-    
-    const isSocket = isNaN(Number(PORT));
-    if (isSocket) {
-        server.listen(PORT);
-    } else {
-        server.listen(Number(PORT), '0.0.0.0');
+// 1. Tentar encontrar o .env de qualquer jeito
+const findEnv = () => {
+    const searchPaths = [
+        path.join(__dirname, '.env'),
+        path.join(__dirname, '..', '.env'),
+        path.join(process.cwd(), '.env'),
+        '/home/' + process.env.USER + '/.env'
+    ];
+    for (const p of searchPaths) {
+        if (fs.existsSync(p)) return p;
     }
-    console.error('Servidor de Erro iniciado na porta/socket:', PORT);
-}
+    return null;
+};
 
-// 1. Verificar TSX
-if (!fs.existsSync(tsxPath)) {
-    startupError = 'O executável TSX não foi encontrado em node_modules/tsx. Por favor, instale as dependências na Hostinger.';
-    serveError(startupError);
+const envPath = findEnv();
+if (envPath) {
+    console.log('✅ Encontrado .env em:', envPath);
+    require('dotenv').config({ path: envPath });
 } else {
-    // CORREÇÃO PARA EACCES: Tentar dar permissão ao esbuild
-    try {
-        const esbuildPath = path.join(__dirname, 'node_modules', '@esbuild', 'linux-x64', 'bin', 'esbuild');
-        if (fs.existsSync(esbuildPath)) {
-            execSync(`chmod +x "${esbuildPath}"`);
-            console.log('Permissão concedida ao esbuild.');
-        }
-    } catch (e) {
-        console.warn('Falha ao tentar dar permissão ao esbuild (isso pode ser normal):', e.message);
-    }
-
-    // 2. Tentar rodar o Orion
-    console.log('--- AMBIENTE HOSTINGER ---');
-    console.log('PORT env:', process.env.PORT);
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    
-    // Listar variáveis importantes para depuração
-    const importantVars = ['PORT', 'NODE_ENV', 'PASSENGER_APP_ENV', 'DOCUMENT_ROOT'];
-    importantVars.forEach(v => {
-        console.log(`${v}: ${process.env[v] || 'não definida'}`);
-    });
-
-    // Se a porta for 3001 e estiver dando erro, vamos tentar NÃO definir porta e deixar o Node escolher se for local,
-    // ou usar o que o Passenger mandar.
-    const targetPort = process.env.PORT || '3000'; // Mudamos para 3000 para evitar o conflito na 3001
-
-    console.log('Tentando spawnar Orion na porta:', targetPort);
-    const child = spawn(process.execPath, [tsxPath, serverPath], {
-        env: Object.assign({}, process.env, { 
-            NODE_ENV: 'production', 
-            PORT: targetPort 
-        }),
-        shell: true
-    });
-
-    let output = '';
-
-    child.stdout.on('data', (data) => {
-        const msg = data.toString();
-        console.log('[Orion]:', msg);
-        output += msg;
-    });
-
-    child.stderr.on('data', (data) => {
-        const msg = data.toString();
-        console.error('[Orion Error]:', msg);
-        output += msg;
-        startupError += msg;
-    });
-
-    child.on('error', (err) => {
-        serveError('Erro ao spawnar processo: ' + err.message);
-    });
-
-    child.on('exit', (code) => {
-        console.log('Orion saiu com código:', code);
-        if (code !== 0 && code !== null) {
-            serveError(`O servidor Orion fechou inesperadamente (Código ${code}).\n\nLog de Saída:\n${output}`);
-        }
-    });
-
-    // Timeout de segurança: Se em 15 segundos ele não "morrer", assumimos que deu certo e paramos de monitorar aqui
-    setTimeout(() => {
-        isStarting = false;
-        console.log('Janela de inicialização concluída. Orion deve estar rodando.');
-    }, 15000);
+    console.warn('❌ .env não encontrado em nenhum lugar conhecido.');
 }
+
+// 2. Carregar TSX e o Servidor em processo único
+const tsxPath = path.join(__dirname, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+const serverPath = path.join(__dirname, 'server.ts');
+
+if (!fs.existsSync(tsxPath)) {
+    console.error('TSX não instalado.');
+    process.exit(1);
+}
+
+// Em vez de spawn, vamos usar o loader do TSX para importar o server.ts
+// Mas como estamos em CJS, vamos chamar o servidor via linha de comando 
+// mas de uma forma que o Passenger entenda que este é o processo pai.
+
+const { spawn } = require('child_process');
+
+// IMPORTANTE: Na Hostinger, se PORT for vazio, não podemos inventar uma porta.
+// Temos que reportar isso.
+if (!process.env.PORT) {
+    console.error('ERRO: Hostinger não forneceu uma PORT/SOCKET.');
+}
+
+const child = spawn(process.execPath, [tsxPath, serverPath], {
+    stdio: 'inherit',
+    env: process.env, // Passa TUDO o que recebeu da Hostinger
+    shell: true
+});
+
+child.on('exit', (code) => {
+    console.log('Servidor finalizado.');
+    process.exit(code);
+});
