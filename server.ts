@@ -112,20 +112,17 @@ io.on("connection", (socket) => {
 });
 
 // Iniciar Servidor
-// Na Hostinger/Passenger, DEVEMOS priorizar o que está no process.env.PORT
-// e não forçar "0.0.0.0" se for um socket.
-if (process.env.PORT) {
-    httpServer.listen(process.env.PORT, () => {
-        console.log(`--------------------------------------------------`);
-        console.log(`🚀 ORION 2 - SISTEMA ONLINE (PASSENGER)`);
-        console.log(`🔌 Escutando em: ${process.env.PORT}`);
-        console.log(`--------------------------------------------------`);
+// Conforme solicitado: listen(Number(process.env.PORT) || 3000, '0.0.0.0')
+const targetPort = process.env.PORT ? (isNaN(Number(process.env.PORT)) ? process.env.PORT : Number(process.env.PORT)) : 3000;
+
+if (typeof targetPort === 'string') {
+    // Se for um socket (Hostinger/Passenger)
+    httpServer.listen(targetPort, () => {
+        console.log(`🚀 Orion Online (Socket): ${targetPort}`);
     });
 } else {
-    httpServer.listen(Number(PORT), "0.0.0.0", () => {
-        console.log(`--------------------------------------------------`);
-        console.log(`🚀 ORION 2 - SISTEMA ONLINE (LOCAL)`);
-        console.log(`🔌 Porta: ${PORT}`);
-        console.log(`--------------------------------------------------`);
+    // Se for uma porta (Local ou Hostinger Port)
+    httpServer.listen(targetPort, '0.0.0.0', () => {
+        console.log(`🚀 Orion Online (Porta): ${targetPort}`);
     });
 }

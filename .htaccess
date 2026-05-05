@@ -4,11 +4,11 @@
 <IfModule mod_passenger.c>
     PassengerAppEnv production
     PassengerAppType node
-    PassengerStartupFile app.cjs
+    PassengerStartupFile app.js
 </IfModule>
 
 RewriteEngine On
-RewriteRule ^app\.cjs$ - [L]
+RewriteRule ^app\.js$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule (.*) app.cjs [L]
+RewriteRule (.*) app.js [L]
