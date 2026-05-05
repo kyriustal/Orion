@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build || echo 'Build ignorado ou falhou no servidor'",
-    "start": "node app.js"
+    "start": "node app.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.43.0",
