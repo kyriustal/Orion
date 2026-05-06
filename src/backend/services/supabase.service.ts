@@ -1,13 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Garante carregamento do .env
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+// Procura o .env na raiz do projeto de forma robusta
+const envPath = existsSync(path.join(process.cwd(), '.env')) 
+    ? path.join(process.cwd(), '.env')
+    : path.resolve(__dirname, '../../../.env');
+
+dotenv.config({ path: envPath });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

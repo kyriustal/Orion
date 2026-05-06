@@ -79464,7 +79464,7 @@ var require_lib7 = __commonJS({
 // server.ts
 import path2 from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
-import { existsSync } from "fs";
+import { existsSync as existsSync2 } from "fs";
 import dotenv2 from "dotenv";
 import express from "express";
 import { createServer } from "http";
@@ -79476,11 +79476,13 @@ import { Router } from "express";
 // src/backend/services/supabase.service.ts
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+var envPath = existsSync(path.join(process.cwd(), ".env")) ? path.join(process.cwd(), ".env") : path.resolve(__dirname, "../../../.env");
+dotenv.config({ path: envPath });
 var supabaseUrl = process.env.SUPABASE_URL;
 var supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 var getSupabase = () => {
@@ -80708,7 +80710,7 @@ var envPaths = [
   path2.join(__dirname2, "..", ".env")
 ];
 for (const p of envPaths) {
-  if (existsSync(p)) {
+  if (existsSync2(p)) {
     dotenv2.config({ path: p });
     console.log(`\u2705 Vari\xE1veis carregadas de: ${p}`);
     break;
@@ -80764,7 +80766,7 @@ try {
   app.use("/api/team", teamRouter);
   app.use("/api/templates", templatesRouter);
   const distPath = path2.resolve(__dirname2, "dist");
-  if (existsSync(distPath)) {
+  if (existsSync2(distPath)) {
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       if (!req.path.startsWith("/api")) {
