@@ -33,19 +33,19 @@ if (!envFound) {
 }
 
 // Importações das APIs
-import { webhookRouter } from "./src/backend/api/webhook";
-import { authRouter } from "./src/backend/api/auth";
-import { dashboardRouter } from "./src/backend/api/dashboard";
-import { whatsappRouter } from "./src/backend/api/whatsapp";
-import { agentRouter } from "./src/backend/api/agent";
-import { chatsRouter } from "./src/backend/api/chats";
-import { automationsRouter } from "./src/backend/api/automations";
-import { subscriptionsRouter } from "./src/backend/api/subscriptions";
-import { knowledgeRouter } from "./src/backend/api/knowledge";
-import { orionWebRouter } from "./src/backend/api/orion-web";
-import { settingsRouter } from "./src/backend/api/settings";
-import { teamRouter } from "./src/backend/api/team";
-import { templatesRouter } from "./src/backend/api/templates";
+import webhookRouter from "./src/backend/api/webhook.ts";
+import { authRouter } from "./src/backend/api/auth.ts";
+import { dashboardRouter } from "./src/backend/api/dashboard.ts";
+import { whatsappRouter } from "./src/backend/api/whatsapp.ts";
+import { agentRouter } from "./src/backend/api/agent.ts";
+import { chatsRouter } from "./src/backend/api/chats.ts";
+import { automationsRouter } from "./src/backend/api/automations.ts";
+import { subscriptionsRouter } from "./src/backend/api/subscriptions.ts";
+import { knowledgeRouter } from "./src/backend/api/knowledge.ts";
+import { orionWebRouter } from "./src/backend/api/orion-web.ts";
+import { settingsRouter } from "./src/backend/api/settings.ts";
+import { teamRouter } from "./src/backend/api/team.ts";
+import { templatesRouter } from "./src/backend/api/templates.ts";
 
 const app = express();
 const httpServer = createServer(app);
