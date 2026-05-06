@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getSupabase } from '../services/supabase.service.ts';
+import { AIOrchestratorService } from '../services/ai_orchestrator.service.ts';
 
 export const chatsRouter = Router();
 
@@ -15,7 +16,6 @@ chatsRouter.get('/', async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    console.error("[Chats] Erro ao listar:", error);
     res.status(500).json({ error: 'Falha ao buscar conversas' });
   }
 });
@@ -34,41 +34,51 @@ chatsRouter.get('/:sessionId/messages', async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    console.error("[Messages] Erro ao buscar histórico:", error);
     res.status(500).json({ error: 'Falha ao buscar histórico' });
   }
 });
 
-// POST /api/chats/:sessionId/takeover - Assumir atendimento
-chatsRouter.post('/:sessionId/takeover', async (req, res) => {
+// POST /api/chats/:sessionId/send - Enviar mensagem e obter resposta da IA
+chatsRouter.post('/:sessionId/send', async (req, res) => {
   const { sessionId } = req.params;
+  const { message } = req.body;
+  const org_id = (req as any).user?.org_id || '00000000-0000-0000-0000-000000000000';
+
   try {
     const supabase = getSupabase();
-    const { error } = await supabase
-      .from('chat_sessions')
-      .update({ is_human_overflow: true })
-      .eq('id', sessionId);
 
-    if (error) throw error;
-    res.json({ message: 'Atendimento humano iniciado.' });
+    // 1. Salvar Mensagem do Usuário (Agente/Admin) no banco
+    await supabase.from('messages').insert({
+      session_id: sessionId,
+      role: 'user',
+      content: message
+    });
+
+    // 2. Buscar contexto para a IA
+    const { data: org } = await supabase.from('organizations').select('*').eq('id', org_id).single();
+    
+    const systemInstruction = `Você é o assistente da ${org?.name || 'Orion'}. 
+    Responda ao usuário no chat do dashboard. 
+    Contexto: ${org?.product_description || ''}`;
+
+    // 3. Gerar Resposta da IA
+    const aiResponse = await AIOrchestratorService.generateChatResponse(systemInstruction, [], message);
+
+    // 4. Salvar Resposta da IA no banco
+    await supabase.from('messages').insert({
+      session_id: sessionId,
+      role: 'model',
+      content: aiResponse.text
+    });
+
+    // 5. Atualizar última interação na sessão
+    await supabase.from('chat_sessions').update({ 
+      last_interaction: new Date().toISOString() 
+    }).eq('id', sessionId);
+
+    res.json({ reply: aiResponse.text });
   } catch (error) {
-    res.status(500).json({ error: 'Falha ao assumir chat' });
-  }
-});
-
-// POST /api/chats/:sessionId/resolve - Reativar IA
-chatsRouter.post('/:sessionId/resolve', async (req, res) => {
-  const { sessionId } = req.params;
-  try {
-    const supabase = getSupabase();
-    const { error } = await supabase
-      .from('chat_sessions')
-      .update({ is_human_overflow: false })
-      .eq('id', sessionId);
-
-    if (error) throw error;
-    res.json({ message: 'Atendimento resolvido. IA reativada.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Falha ao resolver chat' });
+    console.error("[Chat Send] Erro:", error);
+    res.status(500).json({ error: 'Falha ao enviar mensagem ou processar IA' });
   }
 });

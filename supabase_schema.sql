@@ -1,19 +1,11 @@
 -- Script de Configuração ULTRA-ROBUSTA do Banco de Dados Supabase (Orion 2)
 -- Rode este script no "SQL Editor" do seu painel do Supabase.
 
--- 1. LIMPEZA DE SEGURANÇA (Para evitar erro de "já existe")
-DROP POLICY IF EXISTS "Enable all for service role" ON public.organizations;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.whatsapp_configs;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.knowledge_documents;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.chat_sessions;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.messages;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.team_members;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.whatsapp_templates;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.automations;
-DROP POLICY IF EXISTS "Enable all for service role" ON public.campaigns;
+-- 1. EXTENSÕES
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
 
 -- 2. CRIAÇÃO DAS TABELAS (Com IF NOT EXISTS)
-CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
+-- Criamos as tabelas primeiro para garantir que existam antes de manipular políticas.
 
 CREATE TABLE IF NOT EXISTS public.organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -76,30 +68,6 @@ CREATE TABLE IF NOT EXISTS public.knowledge_chunks (
     embedding vector(768),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
-CREATE OR REPLACE FUNCTION match_knowledge_chunks (
-  query_embedding vector(768),
-  match_threshold float,
-  match_count int,
-  p_org_id uuid
-)
-RETURNS TABLE (
-  id bigint,
-  content text,
-  similarity float
-)
-LANGUAGE sql STABLE
-AS $$
-  SELECT
-    kc.id,
-    kc.content,
-    1 - (kc.embedding <=> query_embedding) AS similarity
-  FROM public.knowledge_chunks kc
-  WHERE kc.org_id = p_org_id
-    AND 1 - (kc.embedding <=> query_embedding) > match_threshold
-  ORDER BY kc.embedding <=> query_embedding
-  LIMIT match_count;
-$$;
 
 CREATE TABLE IF NOT EXISTS public.chat_sessions (
     id TEXT PRIMARY KEY,
@@ -165,19 +133,60 @@ CREATE TABLE IF NOT EXISTS public.campaigns (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 3. HABILITAR SEGURANÇA
+-- 3. FUNÇÕES (Devem vir após as tabelas)
+CREATE OR REPLACE FUNCTION match_knowledge_chunks (
+  query_embedding vector(768),
+  match_threshold float,
+  match_count int,
+  p_org_id uuid
+)
+RETURNS TABLE (
+  id bigint,
+  content text,
+  similarity float
+)
+LANGUAGE sql STABLE
+AS $$
+  SELECT
+    kc.id,
+    kc.content,
+    1 - (kc.embedding <=> query_embedding) AS similarity
+  FROM public.knowledge_chunks kc
+  WHERE kc.org_id = p_org_id
+    AND 1 - (kc.embedding <=> query_embedding) > match_threshold
+  ORDER BY kc.embedding <=> query_embedding
+  LIMIT match_count;
+$$;
+
+-- 4. LIMPEZA DE POLÍTICAS (Agora as tabelas já existem)
+DROP POLICY IF EXISTS "Enable all for service role" ON public.organizations;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.whatsapp_configs;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.knowledge_documents;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.knowledge_chunks;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.chat_sessions;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.messages;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.team_members;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.whatsapp_templates;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.automations;
+DROP POLICY IF EXISTS "Enable all for service role" ON public.campaigns;
+
+-- 5. HABILITAR SEGURANÇA (RLS)
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.whatsapp_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.knowledge_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.knowledge_chunks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.whatsapp_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.automations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;
 
--- 4. CRIAR REGRAS NOVAMENTE
+-- 6. CRIAR POLÍTICAS
 CREATE POLICY "Enable all for service role" ON public.organizations FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.whatsapp_configs FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.knowledge_documents FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable all for service role" ON public.knowledge_chunks FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.chat_sessions FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.messages FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.team_members FOR ALL USING (true) WITH CHECK (true);
@@ -185,7 +194,7 @@ CREATE POLICY "Enable all for service role" ON public.whatsapp_templates FOR ALL
 CREATE POLICY "Enable all for service role" ON public.automations FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable all for service role" ON public.campaigns FOR ALL USING (true) WITH CHECK (true);
 
--- 5. DADOS MESTRES
+-- 7. DADOS MESTRES
 INSERT INTO public.organizations (id, name, owner_email) 
 VALUES ('00000000-0000-0000-0000-000000000000', 'Orion Master Demo', 'demo@orion.com') 
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;

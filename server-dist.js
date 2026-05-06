@@ -86,18 +86,29 @@ var GeminiService = class {
     const ai = this.getClient();
     try {
       const model = ai.getGenerativeModel({
-        model: "gemini-2.0-flash",
+        model: "gemini-1.5-flash",
         systemInstruction,
         generationConfig: {
           temperature: 0.2
         },
         tools: tools.length > 0 ? [{ functionDeclarations: tools }] : void 0
       });
+      const normalizedHistory = history.map((h) => {
+        let parts = [];
+        if (h.parts) {
+          parts = Array.isArray(h.parts) ? h.parts : [{ text: String(h.parts) }];
+        } else if (h.content) {
+          parts = [{ text: String(h.content) }];
+        } else {
+          parts = [{ text: "" }];
+        }
+        return {
+          role: h.role === "assistant" || h.role === "model" ? "model" : "user",
+          parts
+        };
+      });
       const chat = model.startChat({
-        history: history.map((h) => ({
-          role: h.role,
-          parts: h.parts
-        }))
+        history: normalizedHistory
       });
       const result = await chat.sendMessage(message);
       const response = result.response;
@@ -572,7 +583,6 @@ chatsRouter.get("/", async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    console.error("[Chats] Erro ao listar:", error);
     res.status(500).json({ error: "Falha ao buscar conversas" });
   }
 });
@@ -584,30 +594,37 @@ chatsRouter.get("/:sessionId/messages", async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
-    console.error("[Messages] Erro ao buscar hist\xF3rico:", error);
     res.status(500).json({ error: "Falha ao buscar hist\xF3rico" });
   }
 });
-chatsRouter.post("/:sessionId/takeover", async (req, res) => {
+chatsRouter.post("/:sessionId/send", async (req, res) => {
   const { sessionId } = req.params;
+  const { message } = req.body;
+  const org_id = req.user?.org_id || "00000000-0000-0000-0000-000000000000";
   try {
     const supabase = getSupabase();
-    const { error } = await supabase.from("chat_sessions").update({ is_human_overflow: true }).eq("id", sessionId);
-    if (error) throw error;
-    res.json({ message: "Atendimento humano iniciado." });
+    await supabase.from("messages").insert({
+      session_id: sessionId,
+      role: "user",
+      content: message
+    });
+    const { data: org } = await supabase.from("organizations").select("*").eq("id", org_id).single();
+    const systemInstruction = `Voc\xEA \xE9 o assistente da ${org?.name || "Orion"}. 
+    Responda ao usu\xE1rio no chat do dashboard. 
+    Contexto: ${org?.product_description || ""}`;
+    const aiResponse = await AIOrchestratorService.generateChatResponse(systemInstruction, [], message);
+    await supabase.from("messages").insert({
+      session_id: sessionId,
+      role: "model",
+      content: aiResponse.text
+    });
+    await supabase.from("chat_sessions").update({
+      last_interaction: (/* @__PURE__ */ new Date()).toISOString()
+    }).eq("id", sessionId);
+    res.json({ reply: aiResponse.text });
   } catch (error) {
-    res.status(500).json({ error: "Falha ao assumir chat" });
-  }
-});
-chatsRouter.post("/:sessionId/resolve", async (req, res) => {
-  const { sessionId } = req.params;
-  try {
-    const supabase = getSupabase();
-    const { error } = await supabase.from("chat_sessions").update({ is_human_overflow: false }).eq("id", sessionId);
-    if (error) throw error;
-    res.json({ message: "Atendimento resolvido. IA reativada." });
-  } catch (error) {
-    res.status(500).json({ error: "Falha ao resolver chat" });
+    console.error("[Chat Send] Erro:", error);
+    res.status(500).json({ error: "Falha ao enviar mensagem ou processar IA" });
   }
 });
 

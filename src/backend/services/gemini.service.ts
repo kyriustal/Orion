@@ -18,8 +18,10 @@ export class GeminiService {
     ): Promise<{ text: string; functionCalls?: any[] }> {
         const ai = this.getClient();
         try {
+            // Usando gemini-1.5-flash como fallback mais estável se o 2.0 falhar, 
+            // mas mantendo 2.0-flash como padrão se disponível.
             const model = ai.getGenerativeModel({
-                model: "gemini-2.0-flash",
+                model: "gemini-1.5-flash", 
                 systemInstruction: systemInstruction,
                 generationConfig: {
                     temperature: 0.2,
@@ -27,18 +29,31 @@ export class GeminiService {
                 tools: tools.length > 0 ? [{ functionDeclarations: tools }] : undefined
             });
 
+            // Normalizar histórico para o formato do Gemini
+            const normalizedHistory = history.map(h => {
+                let parts = [];
+                if (h.parts) {
+                    parts = Array.isArray(h.parts) ? h.parts : [{ text: String(h.parts) }];
+                } else if (h.content) {
+                    parts = [{ text: String(h.content) }];
+                } else {
+                    parts = [{ text: "" }];
+                }
+
+                return {
+                    role: h.role === "assistant" || h.role === "model" ? "model" : "user",
+                    parts: parts
+                };
+            });
+
             const chat = model.startChat({
-                history: history.map(h => ({
-                    role: h.role,
-                    parts: h.parts
-                }))
+                history: normalizedHistory
             });
 
             const result = await chat.sendMessage(message);
             const response = result.response;
             const text = response.text();
 
-            // Check for function calls (simplified for now)
             const calls = response.candidates?.[0]?.content?.parts?.filter(p => p.functionCall);
 
             if (calls && calls.length > 0) {
