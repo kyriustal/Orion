@@ -4,10 +4,16 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined") return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
 var __esm = (fn, res) => function __init() {
   return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
 };
-var __commonJS = (cb2, mod) => function __require() {
+var __commonJS = (cb2, mod) => function __require2() {
   return mod || (0, cb2[__getOwnPropNames(cb2)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 var __export = (target, all) => {
@@ -8693,7 +8699,7 @@ var require_mime_types = __commonJS({
   "node_modules/mime-types/index.js"(exports2) {
     "use strict";
     var db = require_mime_db();
-    var extname = require("path").extname;
+    var extname = __require("path").extname;
     var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/;
     var TEXT_TYPE_REGEXP = /^text\//i;
     exports2.charset = charset;
@@ -10971,7 +10977,7 @@ var require_sbmh = __commonJS({
 var require_multipart = __commonJS({
   "node_modules/busboy/lib/types/multipart.js"(exports2, module2) {
     "use strict";
-    var { Readable, Writable } = require("stream");
+    var { Readable, Writable } = __require("stream");
     var StreamSearch = require_sbmh();
     var {
       basename,
@@ -12018,7 +12024,7 @@ var require_multipart = __commonJS({
 var require_urlencoded = __commonJS({
   "node_modules/busboy/lib/types/urlencoded.js"(exports2, module2) {
     "use strict";
-    var { Writable } = require("stream");
+    var { Writable } = __require("stream");
     var { getDecoder } = require_utils();
     var URLEncoded = class extends Writable {
       constructor(cfg) {
@@ -12743,7 +12749,7 @@ var require_append_field = __commonJS({
 // node_modules/multer/lib/counter.js
 var require_counter = __commonJS({
   "node_modules/multer/lib/counter.js"(exports2, module2) {
-    var EventEmitter = require("events").EventEmitter;
+    var EventEmitter = __require("events").EventEmitter;
     function Counter() {
       EventEmitter.call(this);
       this.value = 0;
@@ -12769,7 +12775,7 @@ var require_counter = __commonJS({
 // node_modules/multer/lib/multer-error.js
 var require_multer_error = __commonJS({
   "node_modules/multer/lib/multer-error.js"(exports2, module2) {
-    var util = require("util");
+    var util = __require("util");
     var errorMessages = {
       LIMIT_PART_COUNT: "Too many parts",
       LIMIT_FILE_SIZE: "File too large",
@@ -13111,10 +13117,10 @@ var require_make_middleware = __commonJS({
 // node_modules/multer/storage/disk.js
 var require_disk = __commonJS({
   "node_modules/multer/storage/disk.js"(exports2, module2) {
-    var fs = require("fs");
-    var os = require("os");
-    var path3 = require("path");
-    var crypto2 = require("crypto");
+    var fs = __require("fs");
+    var os = __require("os");
+    var path3 = __require("path");
+    var crypto2 = __require("crypto");
     function getFilename(req, file, cb2) {
       crypto2.randomBytes(16, function(err, raw) {
         cb2(err, err ? void 0 : raw.toString("hex"));
@@ -13171,7 +13177,7 @@ var require_disk = __commonJS({
 // node_modules/concat-stream/node_modules/readable-stream/lib/internal/streams/stream.js
 var require_stream = __commonJS({
   "node_modules/concat-stream/node_modules/readable-stream/lib/internal/streams/stream.js"(exports2, module2) {
-    module2.exports = require("stream");
+    module2.exports = __require("stream");
   }
 });
 
@@ -13243,9 +13249,9 @@ var require_buffer_list = __commonJS({
       }
       return (hint === "string" ? String : Number)(input);
     }
-    var _require = require("buffer");
+    var _require = __require("buffer");
     var Buffer2 = _require.Buffer;
-    var _require2 = require("util");
+    var _require2 = __require("util");
     var inspect = _require2.inspect;
     var custom = inspect && inspect.custom || "inspect";
     function copyBuffer(src, target, offset) {
@@ -13667,7 +13673,7 @@ var require_inherits_browser = __commonJS({
 var require_inherits = __commonJS({
   "node_modules/inherits/inherits.js"(exports2, module2) {
     try {
-      util = require("util");
+      util = __require("util");
       if (typeof util.inherits !== "function") throw "";
       module2.exports = util.inherits;
     } catch (e) {
@@ -13680,7 +13686,7 @@ var require_inherits = __commonJS({
 // node_modules/util-deprecate/node.js
 var require_node = __commonJS({
   "node_modules/util-deprecate/node.js"(exports2, module2) {
-    module2.exports = require("util").deprecate;
+    module2.exports = __require("util").deprecate;
   }
 });
 
@@ -13703,7 +13709,7 @@ var require_stream_writable = __commonJS({
       deprecate: require_node()
     };
     var Stream = require_stream();
-    var Buffer2 = require("buffer").Buffer;
+    var Buffer2 = __require("buffer").Buffer;
     var OurUint8Array = (typeof global !== "undefined" ? global : typeof window !== "undefined" ? window : typeof self !== "undefined" ? self : {}).Uint8Array || function() {
     };
     function _uint8ArrayToBuffer(chunk2) {
@@ -14251,7 +14257,7 @@ var require_stream_duplex = __commonJS({
 // node_modules/string_decoder/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
   "node_modules/string_decoder/node_modules/safe-buffer/index.js"(exports2, module2) {
-    var buffer = require("buffer");
+    var buffer = __require("buffer");
     var Buffer2 = buffer.Buffer;
     function copyProps(src, dst) {
       for (var key in src) {
@@ -14943,12 +14949,12 @@ var require_stream_readable = __commonJS({
     module2.exports = Readable;
     var Duplex;
     Readable.ReadableState = ReadableState;
-    var EE = require("events").EventEmitter;
+    var EE = __require("events").EventEmitter;
     var EElistenerCount = function EElistenerCount2(emitter, type) {
       return emitter.listeners(type).length;
     };
     var Stream = require_stream();
-    var Buffer2 = require("buffer").Buffer;
+    var Buffer2 = __require("buffer").Buffer;
     var OurUint8Array = (typeof global !== "undefined" ? global : typeof window !== "undefined" ? window : typeof self !== "undefined" ? self : {}).Uint8Array || function() {
     };
     function _uint8ArrayToBuffer(chunk2) {
@@ -14957,7 +14963,7 @@ var require_stream_readable = __commonJS({
     function _isUint8Array(obj2) {
       return Buffer2.isBuffer(obj2) || obj2 instanceof OurUint8Array;
     }
-    var debugUtil = require("util");
+    var debugUtil = __require("util");
     var debug;
     if (debugUtil && debugUtil.debuglog) {
       debug = debugUtil.debuglog("stream");
@@ -15875,7 +15881,7 @@ var require_pipeline = __commonJS({
 // node_modules/concat-stream/node_modules/readable-stream/readable.js
 var require_readable = __commonJS({
   "node_modules/concat-stream/node_modules/readable-stream/readable.js"(exports2, module2) {
-    var Stream = require("stream");
+    var Stream = __require("stream");
     if (process.env.READABLE_STREAM === "disable" && Stream) {
       module2.exports = Stream.Readable;
       Object.assign(module2.exports, Stream);
@@ -18343,10 +18349,9 @@ function makeColorComp(n) {
 function scaleAndClamp(x) {
   return Math.max(0, Math.min(255, 255 * x));
 }
-var import_meta2, __webpack_modules__, __webpack_module_cache__, es_array_push, es_array_buffer_detached, es_array_buffer_transfer, es_array_buffer_transfer_to_fixed_length, es_iterator_constructor, es_iterator_reduce, es_promise_try, es_typed_array_with, esnext_math_sum_precise, esnext_uint8_array_from_base64, esnext_uint8_array_set_from_base64, esnext_uint8_array_set_from_hex, esnext_uint8_array_to_base64, esnext_uint8_array_to_hex, web_dom_exception_stack, web_url_parse, isNodeJS, FONT_IDENTITY_MATRIX, LINE_FACTOR, LINE_DESCENT_FACTOR, BASELINE_FACTOR, RenderingIntentFlag, AnnotationMode, AnnotationEditorPrefix, AnnotationEditorType, AnnotationEditorParamsType, PermissionFlag, TextRenderingMode, util_ImageKind, AnnotationType, AnnotationBorderStyleType, VerbosityLevel, OPS, DrawOPS, PasswordResponses, verbosity, BaseException, PasswordException, UnknownErrorException, InvalidPDFException, ResponseException, FormatError, AbortException, util_FeatureTest, hexNumbers, Util, NormalizeRegex, NormalizationMap, AnnotationPrefix, es_iterator_map, web_url_search_params_delete, web_url_search_params_has, web_url_search_params_size, XfaText, XfaLayer, SVG_NS, PixelsPerInch, PageViewport, RenderingCancelledException, StatTimer, PDFDateString, OutputScale, SupportedImageMimeTypes, ColorScheme, CSSConstants, contrastCache, es_iterator_take, es_promise_with_resolvers, es_set_difference_v2, es_set_intersection_v2, es_set_is_disjoint_from_v2, es_set_is_subset_of_v2, es_set_is_superset_of_v2, es_set_symmetric_difference_v2, es_set_union_v2, es_iterator_drop, es_iterator_every, es_iterator_some, esnext_json_parse, EditorToolbar, FloatingToolbar, IdManager, ImageManager, CommandManager, KeyboardManager, ColorManager, AnnotationEditorUIManager, AltText, Comment, TouchManager, AnnotationEditor, FakeEditor, SEED, MASK_HIGH, MASK_LOW, MurmurHash3_64, SerializableEmpty, AnnotationStorage, PrintAnnotationStorage, FontLoader, FontFaceObject, isRefProxy, isNameProxy, isValidExplicitDest, LoopbackPort, CallbackKind, StreamKind, MessageHandler, BaseCanvasFactory, DOMCanvasFactory, BaseCMapReaderFactory, DOMCMapReaderFactory, es_iterator_filter, BaseFilterFactory, DOMFilterFactory, BaseStandardFontDataFactory, DOMStandardFontDataFactory, BaseWasmFactory, DOMWasmFactory, NodeFilterFactory, NodeCanvasFactory, NodeCMapReaderFactory, NodeStandardFontDataFactory, NodeWasmFactory, es_iterator_for_each, FORCED_DEPENDENCY_LABEL, floor, ceil, EMPTY_BBOX, BBoxReader, ensureDebugMetadata, CanvasDependencyTracker, CanvasNestedDependencyTracker, Dependencies, PathType, BaseShadingPattern, RadialAxialShadingPattern, MeshShadingPattern, DummyShadingPattern, PaintType, TilingPattern, MIN_FONT_SIZE, MAX_FONT_SIZE, EXECUTION_TIME, EXECUTION_STEPS, FULL_CHUNK_HEIGHT, SCALE_MATRIX, XY, MIN_MAX_INIT, CachedCanvases, CanvasExtraState, LINE_CAP_STYLES, LINE_JOIN_STYLES, NORMAL_CLIP, EO_CLIP, CanvasGraphics, CssFontInfo, SystemFontInfo, FontInfo, GlobalWorkerOptions, Metadata, INTERNAL, OptionalContentGroup, OptionalContentConfig, PDFDataTransportStream, PDFDataTransportStreamReader, PDFDataTransportStreamRangeReader, PDFFetchStream, PDFFetchStreamReader, PDFFetchStreamRangeReader, OK_RESPONSE, PARTIAL_CONTENT_RESPONSE, NetworkManager, PDFNetworkStream, PDFNetworkStreamFullRequestReader, PDFNetworkStreamRangeRequestReader, urlRegex, PDFNodeStream, PDFNodeStreamFsFullReader, PDFNodeStreamFsRangeReader, INITIAL_DATA, PDFObjects, MAX_TEXT_DIVS_TO_RENDER, DEFAULT_FONT_SIZE, TextLayer, RENDERING_CANCELLED_TIMEOUT, PDFDocumentLoadingTask, PDFDataRangeTransport, PDFDocumentProxy, PDFPageProxy, PDFWorker, WorkerTransport, RenderTask, InternalRenderTask, version, build, ColorPicker, BasicColorPicker, es_iterator_find, es_iterator_flat_map, ColorConverters, BaseSVGFactory, DOMSVGFactory, annotation_layer_DEFAULT_FONT_SIZE, GetElementsByNameSet, TIMEZONE_OFFSET, AnnotationElementFactory, AnnotationElement, EditorAnnotationElement, LinkAnnotationElement, TextAnnotationElement, WidgetAnnotationElement, TextWidgetAnnotationElement, SignatureWidgetAnnotationElement, CheckboxWidgetAnnotationElement, RadioButtonWidgetAnnotationElement, PushButtonWidgetAnnotationElement, ChoiceWidgetAnnotationElement, PopupAnnotationElement, PopupElement, FreeTextAnnotationElement, LineAnnotationElement, SquareAnnotationElement, CircleAnnotationElement, PolylineAnnotationElement, PolygonAnnotationElement, CaretAnnotationElement, InkAnnotationElement, HighlightAnnotationElement, UnderlineAnnotationElement, SquigglyAnnotationElement, StrikeOutAnnotationElement, StampAnnotationElement, FileAttachmentAnnotationElement, AnnotationLayer, EOL_PATTERN, FreeTextEditor, Outline, FreeDrawOutliner, FreeDrawOutline, HighlightOutliner, HighlightOutline, FreeHighlightOutliner, FreeHighlightOutline, HighlightEditor, DrawingOptions, DrawingEditor, InkDrawOutliner, InkDrawOutline, InkDrawingOptions, InkEditor, ContourDrawOutline, BASE_HEADER_LENGTH, POINTS_PROPERTIES_NUMBER, SignatureExtractor, SignatureOptions, DrawnSignatureOptions, SignatureEditor, StampEditor, AnnotationEditorLayer, DrawLayer;
+var __webpack_modules__, __webpack_module_cache__, es_array_push, es_array_buffer_detached, es_array_buffer_transfer, es_array_buffer_transfer_to_fixed_length, es_iterator_constructor, es_iterator_reduce, es_promise_try, es_typed_array_with, esnext_math_sum_precise, esnext_uint8_array_from_base64, esnext_uint8_array_set_from_base64, esnext_uint8_array_set_from_hex, esnext_uint8_array_to_base64, esnext_uint8_array_to_hex, web_dom_exception_stack, web_url_parse, isNodeJS, FONT_IDENTITY_MATRIX, LINE_FACTOR, LINE_DESCENT_FACTOR, BASELINE_FACTOR, RenderingIntentFlag, AnnotationMode, AnnotationEditorPrefix, AnnotationEditorType, AnnotationEditorParamsType, PermissionFlag, TextRenderingMode, util_ImageKind, AnnotationType, AnnotationBorderStyleType, VerbosityLevel, OPS, DrawOPS, PasswordResponses, verbosity, BaseException, PasswordException, UnknownErrorException, InvalidPDFException, ResponseException, FormatError, AbortException, util_FeatureTest, hexNumbers, Util, NormalizeRegex, NormalizationMap, AnnotationPrefix, es_iterator_map, web_url_search_params_delete, web_url_search_params_has, web_url_search_params_size, XfaText, XfaLayer, SVG_NS, PixelsPerInch, PageViewport, RenderingCancelledException, StatTimer, PDFDateString, OutputScale, SupportedImageMimeTypes, ColorScheme, CSSConstants, contrastCache, es_iterator_take, es_promise_with_resolvers, es_set_difference_v2, es_set_intersection_v2, es_set_is_disjoint_from_v2, es_set_is_subset_of_v2, es_set_is_superset_of_v2, es_set_symmetric_difference_v2, es_set_union_v2, es_iterator_drop, es_iterator_every, es_iterator_some, esnext_json_parse, EditorToolbar, FloatingToolbar, IdManager, ImageManager, CommandManager, KeyboardManager, ColorManager, AnnotationEditorUIManager, AltText, Comment, TouchManager, AnnotationEditor, FakeEditor, SEED, MASK_HIGH, MASK_LOW, MurmurHash3_64, SerializableEmpty, AnnotationStorage, PrintAnnotationStorage, FontLoader, FontFaceObject, isRefProxy, isNameProxy, isValidExplicitDest, LoopbackPort, CallbackKind, StreamKind, MessageHandler, BaseCanvasFactory, DOMCanvasFactory, BaseCMapReaderFactory, DOMCMapReaderFactory, es_iterator_filter, BaseFilterFactory, DOMFilterFactory, BaseStandardFontDataFactory, DOMStandardFontDataFactory, BaseWasmFactory, DOMWasmFactory, NodeFilterFactory, NodeCanvasFactory, NodeCMapReaderFactory, NodeStandardFontDataFactory, NodeWasmFactory, es_iterator_for_each, FORCED_DEPENDENCY_LABEL, floor, ceil, EMPTY_BBOX, BBoxReader, ensureDebugMetadata, CanvasDependencyTracker, CanvasNestedDependencyTracker, Dependencies, PathType, BaseShadingPattern, RadialAxialShadingPattern, MeshShadingPattern, DummyShadingPattern, PaintType, TilingPattern, MIN_FONT_SIZE, MAX_FONT_SIZE, EXECUTION_TIME, EXECUTION_STEPS, FULL_CHUNK_HEIGHT, SCALE_MATRIX, XY, MIN_MAX_INIT, CachedCanvases, CanvasExtraState, LINE_CAP_STYLES, LINE_JOIN_STYLES, NORMAL_CLIP, EO_CLIP, CanvasGraphics, CssFontInfo, SystemFontInfo, FontInfo, GlobalWorkerOptions, Metadata, INTERNAL, OptionalContentGroup, OptionalContentConfig, PDFDataTransportStream, PDFDataTransportStreamReader, PDFDataTransportStreamRangeReader, PDFFetchStream, PDFFetchStreamReader, PDFFetchStreamRangeReader, OK_RESPONSE, PARTIAL_CONTENT_RESPONSE, NetworkManager, PDFNetworkStream, PDFNetworkStreamFullRequestReader, PDFNetworkStreamRangeRequestReader, urlRegex, PDFNodeStream, PDFNodeStreamFsFullReader, PDFNodeStreamFsRangeReader, INITIAL_DATA, PDFObjects, MAX_TEXT_DIVS_TO_RENDER, DEFAULT_FONT_SIZE, TextLayer, RENDERING_CANCELLED_TIMEOUT, PDFDocumentLoadingTask, PDFDataRangeTransport, PDFDocumentProxy, PDFPageProxy, PDFWorker, WorkerTransport, RenderTask, InternalRenderTask, version, build, ColorPicker, BasicColorPicker, es_iterator_find, es_iterator_flat_map, ColorConverters, BaseSVGFactory, DOMSVGFactory, annotation_layer_DEFAULT_FONT_SIZE, GetElementsByNameSet, TIMEZONE_OFFSET, AnnotationElementFactory, AnnotationElement, EditorAnnotationElement, LinkAnnotationElement, TextAnnotationElement, WidgetAnnotationElement, TextWidgetAnnotationElement, SignatureWidgetAnnotationElement, CheckboxWidgetAnnotationElement, RadioButtonWidgetAnnotationElement, PushButtonWidgetAnnotationElement, ChoiceWidgetAnnotationElement, PopupAnnotationElement, PopupElement, FreeTextAnnotationElement, LineAnnotationElement, SquareAnnotationElement, CircleAnnotationElement, PolylineAnnotationElement, PolygonAnnotationElement, CaretAnnotationElement, InkAnnotationElement, HighlightAnnotationElement, UnderlineAnnotationElement, SquigglyAnnotationElement, StrikeOutAnnotationElement, StampAnnotationElement, FileAttachmentAnnotationElement, AnnotationLayer, EOL_PATTERN, FreeTextEditor, Outline, FreeDrawOutliner, FreeDrawOutline, HighlightOutliner, HighlightOutline, FreeHighlightOutliner, FreeHighlightOutline, HighlightEditor, DrawingOptions, DrawingEditor, InkDrawOutliner, InkDrawOutline, InkDrawingOptions, InkEditor, ContourDrawOutline, BASE_HEADER_LENGTH, POINTS_PROPERTIES_NUMBER, SignatureExtractor, SignatureOptions, DrawnSignatureOptions, SignatureEditor, StampEditor, AnnotationEditorLayer, DrawLayer;
 var init_pdf = __esm({
   "node_modules/pdfjs-dist/legacy/build/pdf.mjs"() {
-    import_meta2 = {};
     __webpack_modules__ = {
       /***/
       34: (
@@ -30366,7 +30371,7 @@ var init_pdf = __esm({
     if (isNodeJS) {
       let canvas;
       try {
-        const require2 = process.getBuiltinModule("module").createRequire(import_meta2.url);
+        const require2 = process.getBuiltinModule("module").createRequire(import.meta.url);
         try {
           canvas = require2("@napi-rs/canvas");
         } catch (ex) {
@@ -30408,7 +30413,7 @@ var init_pdf = __esm({
     };
     NodeCanvasFactory = class extends BaseCanvasFactory {
       _createCanvas(width, height) {
-        const require2 = process.getBuiltinModule("module").createRequire(import_meta2.url);
+        const require2 = process.getBuiltinModule("module").createRequire(import.meta.url);
         const canvas = require2("@napi-rs/canvas");
         return canvas.createCanvas(width, height);
       }
@@ -57470,14 +57475,14 @@ var require_isarray = __commonJS({
 // node_modules/readable-stream/lib/internal/streams/stream.js
 var require_stream2 = __commonJS({
   "node_modules/readable-stream/lib/internal/streams/stream.js"(exports2, module2) {
-    module2.exports = require("stream");
+    module2.exports = __require("stream");
   }
 });
 
 // node_modules/readable-stream/node_modules/safe-buffer/index.js
 var require_safe_buffer2 = __commonJS({
   "node_modules/readable-stream/node_modules/safe-buffer/index.js"(exports2, module2) {
-    var buffer = require("buffer");
+    var buffer = __require("buffer");
     var Buffer2 = buffer.Buffer;
     function copyProps(src, dst) {
       for (var key in src) {
@@ -57594,7 +57599,7 @@ var require_util2 = __commonJS({
       typeof arg === "undefined";
     }
     exports2.isPrimitive = isPrimitive2;
-    exports2.isBuffer = require("buffer").Buffer.isBuffer;
+    exports2.isBuffer = __require("buffer").Buffer.isBuffer;
     function objectToString(o) {
       return Object.prototype.toString.call(o);
     }
@@ -57611,7 +57616,7 @@ var require_BufferList = __commonJS({
       }
     }
     var Buffer2 = require_safe_buffer2().Buffer;
-    var util = require("util");
+    var util = __require("util");
     function copyBuffer(src, target, offset) {
       src.copy(target, offset);
     }
@@ -58274,7 +58279,7 @@ var require_stream_readable2 = __commonJS({
     var isArray = require_isarray();
     var Duplex;
     Readable.ReadableState = ReadableState;
-    var EE = require("events").EventEmitter;
+    var EE = __require("events").EventEmitter;
     var EElistenerCount = function(emitter, type) {
       return emitter.listeners(type).length;
     };
@@ -58290,7 +58295,7 @@ var require_stream_readable2 = __commonJS({
     }
     var util = Object.create(require_util2());
     util.inherits = require_inherits();
-    var debugUtil = require("util");
+    var debugUtil = __require("util");
     var debug = void 0;
     if (debugUtil && debugUtil.debuglog) {
       debug = debugUtil.debuglog("stream");
@@ -59073,7 +59078,7 @@ var require_stream_passthrough2 = __commonJS({
 // node_modules/readable-stream/readable.js
 var require_readable2 = __commonJS({
   "node_modules/readable-stream/readable.js"(exports2, module2) {
-    var Stream = require("stream");
+    var Stream = __require("stream");
     if (process.env.READABLE_STREAM === "disable" && Stream) {
       module2.exports = Stream;
       exports2 = module2.exports = Stream.Readable;
@@ -76577,11 +76582,11 @@ var require_path_is_absolute = __commonJS({
 // node_modules/mammoth/lib/docx/files.js
 var require_files = __commonJS({
   "node_modules/mammoth/lib/docx/files.js"(exports2) {
-    var fs = require("fs");
-    var url = require("url");
-    var os = require("os");
-    var dirname = require("path").dirname;
-    var resolvePath = require("path").resolve;
+    var fs = __require("fs");
+    var url = __require("url");
+    var os = __require("os");
+    var dirname = __require("path").dirname;
+    var resolvePath = __require("path").resolve;
     var isAbsolutePath = require_path_is_absolute();
     var promises = require_promises();
     exports2.Files = Files;
@@ -79331,7 +79336,7 @@ var require_options_reader = __commonJS({
 // node_modules/mammoth/lib/unzip.js
 var require_unzip = __commonJS({
   "node_modules/mammoth/lib/unzip.js"(exports2) {
-    var fs = require("fs");
+    var fs = __require("fs");
     var promises = require_promises();
     var zipfile = require_zipfile();
     exports2.openZip = openZip;
@@ -79457,26 +79462,25 @@ var require_lib7 = __commonJS({
 });
 
 // server.ts
-var import_path2 = __toESM(require("path"), 1);
-var import_url2 = require("url");
-var import_fs = require("fs");
-var import_dotenv2 = __toESM(require("dotenv"), 1);
-var import_express14 = __toESM(require("express"), 1);
-var import_http = require("http");
-var import_socket = require("socket.io");
+import path2 from "path";
+import { fileURLToPath as fileURLToPath2 } from "url";
+import { existsSync } from "fs";
+import dotenv2 from "dotenv";
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 // src/backend/api/webhook.ts
-var import_express = require("express");
+import { Router } from "express";
 
 // src/backend/services/supabase.service.ts
-var import_supabase_js = require("@supabase/supabase-js");
-var import_dotenv = __toESM(require("dotenv"), 1);
-var import_path = __toESM(require("path"), 1);
-var import_url = require("url");
-var import_meta = {};
-var __filename = (0, import_url.fileURLToPath)(import_meta.url);
-var __dirname = import_path.default.dirname(__filename);
-import_dotenv.default.config({ path: import_path.default.resolve(__dirname, "../../../.env") });
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 var supabaseUrl = process.env.SUPABASE_URL;
 var supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 var getSupabase = () => {
@@ -79484,7 +79488,7 @@ var getSupabase = () => {
     console.error("[Supabase] ERRO: Chaves de configuracao ausentes!");
     throw new Error("Configuracao do Supabase incompleta no servidor.");
   }
-  return (0, import_supabase_js.createClient)(supabaseUrl, supabaseServiceRoleKey, {
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
@@ -79530,14 +79534,14 @@ var WhatsAppService = class {
 };
 
 // src/backend/services/gemini.service.ts
-var import_genai = require("@google/genai");
+import { GoogleGenAI } from "@google/genai";
 var GeminiService = class {
   static {
     this.ai = null;
   }
   static getClient() {
     if (!this.ai) {
-      this.ai = new import_genai.GoogleGenAI(process.env.GEMINI_API_KEY || "");
+      this.ai = new GoogleGenAI(process.env.GEMINI_API_KEY || "");
     }
     return this.ai;
   }
@@ -79686,7 +79690,7 @@ var AIOrchestratorService = class {
 };
 
 // src/backend/api/webhook.ts
-var webhookRouter = (0, import_express.Router)();
+var webhookRouter = Router();
 webhookRouter.get("/", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -79818,15 +79822,15 @@ ${knowledgeSection}
 }
 
 // src/backend/api/auth.ts
-var import_express2 = require("express");
-var import_bcryptjs = __toESM(require("bcryptjs"), 1);
-var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"), 1);
+import { Router as Router2 } from "express";
+import bcrypt from "bcryptjs";
+import jwt2 from "jsonwebtoken";
 
 // src/backend/middleware/auth.middleware.ts
-var import_jsonwebtoken = __toESM(require("jsonwebtoken"), 1);
+import jwt from "jsonwebtoken";
 
 // src/backend/config/jwt.ts
-var import_config = require("dotenv/config");
+import "dotenv/config";
 var JWT_SECRET = (process.env.JWT_SECRET || "orion_fallback_secret_321").trim();
 
 // src/backend/middleware/auth.middleware.ts
@@ -79837,7 +79841,7 @@ var requireAuth = (req, res, next) => {
   }
   const token = authHeader.split(" ")[1];
   try {
-    const decoded = import_jsonwebtoken.default.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = {
       id: decoded.id,
       org_id: decoded.org_id,
@@ -79857,7 +79861,7 @@ var requireAuth = (req, res, next) => {
 };
 
 // src/backend/api/auth.ts
-var authRouter = (0, import_express2.Router)();
+var authRouter = Router2();
 authRouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -79877,11 +79881,11 @@ authRouter.post("/login", async (req, res) => {
     if (!org) {
       return res.status(401).json({ error: "E-mail ou senha incorretos." });
     }
-    const isMatch2 = await import_bcryptjs.default.compare(password, org.password || "");
+    const isMatch2 = await bcrypt.compare(password, org.password || "");
     if (!isMatch2) {
       return res.status(401).json({ error: "E-mail ou senha incorretos." });
     }
-    const token = import_jsonwebtoken2.default.sign(
+    const token = jwt2.sign(
       { id: org.id, org_id: org.id, email: org.owner_email, role: "admin" },
       JWT_SECRET,
       { expiresIn: "7d" }
@@ -79921,7 +79925,7 @@ authRouter.post("/register", async (req, res) => {
     if (existing) {
       return res.status(400).json({ error: "Este e-mail j\xE1 est\xE1 cadastrado." });
     }
-    const hashedPassword = await import_bcryptjs.default.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const { data: org, error } = await supabase.from("organizations").insert([{
       name: companyName,
       owner_email: email,
@@ -79975,8 +79979,8 @@ authRouter.get("/me", requireAuth, async (req, res) => {
 });
 
 // src/backend/api/dashboard.ts
-var import_express3 = require("express");
-var dashboardRouter = (0, import_express3.Router)();
+import { Router as Router3 } from "express";
+var dashboardRouter = Router3();
 dashboardRouter.get("/stats", async (req, res) => {
   try {
     const supabase = getSupabase();
@@ -79998,8 +80002,8 @@ dashboardRouter.get("/stats", async (req, res) => {
 });
 
 // src/backend/api/whatsapp.ts
-var import_express4 = require("express");
-var whatsappRouter = (0, import_express4.Router)();
+import { Router as Router4 } from "express";
+var whatsappRouter = Router4();
 whatsappRouter.get("/config", requireAuth, async (req, res) => {
   try {
     const orgId = req.user?.org_id;
@@ -80069,8 +80073,8 @@ whatsappRouter.post("/config", requireAuth, async (req, res) => {
 });
 
 // src/backend/api/agent.ts
-var import_express5 = require("express");
-var agentRouter = (0, import_express5.Router)();
+import { Router as Router5 } from "express";
+var agentRouter = Router5();
 agentRouter.post("/simulate", async (req, res) => {
   const { message, history } = req.body;
   const org_id = req.user?.org_id || "00000000-0000-0000-0000-000000000000";
@@ -80174,8 +80178,8 @@ ${knowledgeSection}
 }
 
 // src/backend/api/chats.ts
-var import_express6 = require("express");
-var chatsRouter = (0, import_express6.Router)();
+import { Router as Router6 } from "express";
+var chatsRouter = Router6();
 chatsRouter.get("/", async (req, res) => {
   try {
     const supabase = getSupabase();
@@ -80229,8 +80233,8 @@ chatsRouter.post("/:sessionId/send", async (req, res) => {
 });
 
 // src/backend/api/automations.ts
-var import_express7 = require("express");
-var automationsRouter = (0, import_express7.Router)();
+import { Router as Router7 } from "express";
+var automationsRouter = Router7();
 automationsRouter.get("/", requireAuth, async (req, res) => {
   try {
     const orgId = req.user?.org_id;
@@ -80347,8 +80351,8 @@ automationsRouter.put("/:id/toggle", requireAuth, async (req, res) => {
 });
 
 // src/backend/api/subscriptions.ts
-var import_express8 = require("express");
-var subscriptionsRouter = (0, import_express8.Router)();
+import { Router as Router8 } from "express";
+var subscriptionsRouter = Router8();
 subscriptionsRouter.post("/start-trial", requireAuth, async (req, res) => {
   const orgId = req.user?.org_id;
   const { planId } = req.body;
@@ -80373,14 +80377,14 @@ subscriptionsRouter.get("/status", requireAuth, async (req, res) => {
 });
 
 // src/backend/api/knowledge.ts
-var import_express9 = require("express");
+import { Router as Router9 } from "express";
 var import_multer = __toESM(require_multer(), 1);
 var upload = (0, import_multer.default)({
   storage: import_multer.default.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }
   // 10MB
 });
-var knowledgeRouter = (0, import_express9.Router)();
+var knowledgeRouter = Router9();
 function splitIntoChunks(text, chunkSize = 700, overlap = 100) {
   const words = text.split(/\s+/).filter(Boolean);
   const chunks = [];
@@ -80540,8 +80544,8 @@ knowledgeRouter.post("/process", async (req, res) => {
 });
 
 // src/backend/api/orion-web.ts
-var import_express10 = require("express");
-var orionWebRouter = (0, import_express10.Router)();
+import { Router as Router10 } from "express";
+var orionWebRouter = Router10();
 orionWebRouter.post("/chat", async (req, res) => {
   const { message, history } = req.body;
   try {
@@ -80561,9 +80565,9 @@ orionWebRouter.post("/chat", async (req, res) => {
 });
 
 // src/backend/api/settings.ts
-var import_express11 = require("express");
-var import_bcryptjs2 = __toESM(require("bcryptjs"), 1);
-var settingsRouter = (0, import_express11.Router)();
+import { Router as Router11 } from "express";
+import bcrypt2 from "bcryptjs";
+var settingsRouter = Router11();
 settingsRouter.get("/org", requireAuth, async (req, res) => {
   try {
     const supabase = getSupabase();
@@ -80617,11 +80621,11 @@ settingsRouter.post("/password", requireAuth, async (req, res) => {
     const supabase = getSupabase();
     const { data: org, error: fetchError } = await supabase.from("organizations").select("password").eq("id", req.user?.org_id).single();
     if (fetchError || !org) throw new Error("Usu\xE1rio n\xE3o encontrado.");
-    const isMatch2 = await import_bcryptjs2.default.compare(currentPassword, org.password);
+    const isMatch2 = await bcrypt2.compare(currentPassword, org.password);
     if (!isMatch2) {
       return res.status(401).json({ error: "Sua senha atual est\xE1 incorreta." });
     }
-    const hashedPassword = await import_bcryptjs2.default.hash(newPassword, 10);
+    const hashedPassword = await bcrypt2.hash(newPassword, 10);
     const { error: updateError } = await supabase.from("organizations").update({ password: hashedPassword }).eq("id", req.user?.org_id);
     if (updateError) throw updateError;
     res.json({ message: "Senha alterada com sucesso!" });
@@ -80631,9 +80635,9 @@ settingsRouter.post("/password", requireAuth, async (req, res) => {
 });
 
 // src/backend/api/team.ts
-var import_express12 = require("express");
-var import_bcryptjs3 = __toESM(require("bcryptjs"), 1);
-var teamRouter = (0, import_express12.Router)();
+import { Router as Router12 } from "express";
+import bcrypt3 from "bcryptjs";
+var teamRouter = Router12();
 teamRouter.get("/", requireAuth, async (req, res) => {
   try {
     const supabase = getSupabase();
@@ -80648,7 +80652,7 @@ teamRouter.post("/", requireAuth, async (req, res) => {
   try {
     const { name, email, role, password } = req.body;
     const supabase = getSupabase();
-    const hashedPassword = await import_bcryptjs3.default.hash(password, 10);
+    const hashedPassword = await bcrypt3.hash(password, 10);
     const { data, error } = await supabase.from("team_members").insert({
       org_id: req.user?.org_id,
       name,
@@ -80664,8 +80668,8 @@ teamRouter.post("/", requireAuth, async (req, res) => {
 });
 
 // src/backend/api/templates.ts
-var import_express13 = require("express");
-var templatesRouter = (0, import_express13.Router)();
+import { Router as Router13 } from "express";
+var templatesRouter = Router13();
 templatesRouter.get("/", requireAuth, async (req, res) => {
   try {
     const supabase = getSupabase();
@@ -80695,18 +80699,17 @@ templatesRouter.post("/", requireAuth, async (req, res) => {
 });
 
 // server.ts
-var import_fs2 = require("fs");
-var import_meta3 = {};
-var __filename2 = (0, import_url2.fileURLToPath)(import_meta3.url);
-var __dirname2 = import_path2.default.dirname(__filename2);
+import { appendFileSync } from "fs";
+var __filename2 = fileURLToPath2(import.meta.url);
+var __dirname2 = path2.dirname(__filename2);
 var envPaths = [
-  import_path2.default.join(__dirname2, ".env"),
-  import_path2.default.join(process.cwd(), ".env"),
-  import_path2.default.join(__dirname2, "..", ".env")
+  path2.join(__dirname2, ".env"),
+  path2.join(process.cwd(), ".env"),
+  path2.join(__dirname2, "..", ".env")
 ];
 for (const p of envPaths) {
-  if ((0, import_fs.existsSync)(p)) {
-    import_dotenv2.default.config({ path: p });
+  if (existsSync(p)) {
+    dotenv2.config({ path: p });
     console.log(`\u2705 Vari\xE1veis carregadas de: ${p}`);
     break;
   }
@@ -80718,14 +80721,14 @@ ${err.stack || err}
 `;
   console.error(msg);
   try {
-    (0, import_fs2.appendFileSync)(import_path2.default.join(__dirname2, "erro_fatal.log"), msg);
+    appendFileSync(path2.join(__dirname2, "erro_fatal.log"), msg);
   } catch (e) {
   }
 };
 try {
-  const app = (0, import_express14.default)();
-  const httpServer = (0, import_http.createServer)(app);
-  const io = new import_socket.Server(httpServer, {
+  const app = express();
+  const httpServer = createServer(app);
+  const io = new Server(httpServer, {
     path: "/socket.io/",
     cors: {
       origin: "*",
@@ -80736,8 +80739,8 @@ try {
     allowEIO3: true
   });
   const PORT = process.env.PORT || 3e3;
-  app.use(import_express14.default.json());
-  app.use(import_express14.default.urlencoded({ extended: true }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   app.get("/api/debug-env", (req, res) => {
     res.json({
       status: "online",
@@ -80760,12 +80763,12 @@ try {
   app.use("/api/settings", settingsRouter);
   app.use("/api/team", teamRouter);
   app.use("/api/templates", templatesRouter);
-  const distPath = import_path2.default.resolve(__dirname2, "dist");
-  if ((0, import_fs.existsSync)(distPath)) {
-    app.use(import_express14.default.static(distPath));
+  const distPath = path2.resolve(__dirname2, "dist");
+  if (existsSync(distPath)) {
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
       if (!req.path.startsWith("/api")) {
-        res.sendFile(import_path2.default.join(distPath, "index.html"));
+        res.sendFile(path2.join(distPath, "index.html"));
       } else {
         res.status(404).json({ error: "Rota de API n\xE3o encontrada" });
       }
