@@ -40,76 +40,86 @@ import { settingsRouter } from "./src/backend/api/settings.ts";
 import { teamRouter } from "./src/backend/api/team.ts";
 import { templatesRouter } from "./src/backend/api/templates.ts";
 
-const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  path: '/socket.io/',
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true
-  },
-  transports: ['polling', 'websocket'], // Garante compatibilidade
-  allowEIO3: true
-});
+import { appendFileSync } from "fs";
 
-const PORT = process.env.PORT || 3001;
+// Função para logar erros críticos antes de qualquer coisa
+const logFatalError = (err: any) => {
+    const msg = `\n[${new Date().toISOString()}] ERRO FATAL NA INICIALIZAÇÃO:\n${err.stack || err}\n`;
+    console.error(msg);
+    try {
+        appendFileSync(path.join(__dirname, "erro_fatal.log"), msg);
+    } catch (e) {}
+};
 
-// Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+try {
+    const app = express();
+    const httpServer = createServer(app);
+    const io = new Server(httpServer, {
+      path: '/socket.io/',
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true
+      },
+      transports: ['polling', 'websocket'],
+      allowEIO3: true
+    });
 
-// Rota de Diagnóstico
-app.get('/api/debug-env', (req, res) => {
-  res.json({
-    status: 'online',
-    port: PORT,
-    node_version: process.version,
-    supabase_url: process.env.VITE_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE',
-    gemini_key: process.env.GOOGLE_GEMINI_API_KEY ? 'DEFINIDA' : 'AUSENTE'
-  });
-});
+    const PORT = process.env.PORT || 3000;
 
-// Registrar Rotas da API
-app.use("/api/webhook", webhookRouter);
-app.use("/api/auth", authRouter);
-app.use("/api/dashboard", dashboardRouter);
-app.use("/api/whatsapp", whatsappRouter);
-app.use("/api/agent", agentRouter);
-app.use("/api/chats", chatsRouter);
-app.use("/api/automations", automationsRouter);
-app.use("/api/subscriptions", subscriptionsRouter);
-app.use("/api/knowledge", knowledgeRouter);
-app.use("/api/orion-web", orionWebRouter);
-app.use("/api/settings", settingsRouter);
-app.use("/api/team", teamRouter);
-app.use("/api/templates", templatesRouter);
+    // Middlewares
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
 
-// Servir Frontend (Pasta dist)
-const distPath = path.resolve(__dirname, 'dist');
-if (existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(distPath, 'index.html'));
-    } else {
-      res.status(404).json({ error: 'Rota de API não encontrada' });
+    // Rota de Diagnóstico
+    app.get('/api/debug-env', (req, res) => {
+      res.json({
+        status: 'online',
+        port: PORT,
+        node_version: process.version,
+        supabase_url: process.env.VITE_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE',
+        gemini_key: process.env.GOOGLE_GEMINI_API_KEY ? 'DEFINIDA' : 'AUSENTE'
+      });
+    });
+
+    // Registrar Rotas da API
+    app.use("/api/webhook", webhookRouter);
+    app.use("/api/auth", authRouter);
+    app.use("/api/dashboard", dashboardRouter);
+    app.use("/api/whatsapp", whatsappRouter);
+    app.use("/api/agent", agentRouter);
+    app.use("/api/chats", chatsRouter);
+    app.use("/api/automations", automationsRouter);
+    app.use("/api/subscriptions", subscriptionsRouter);
+    app.use("/api/knowledge", knowledgeRouter);
+    app.use("/api/orion-web", orionWebRouter);
+    app.use("/api/settings", settingsRouter);
+    app.use("/api/team", teamRouter);
+    app.use("/api/templates", templatesRouter);
+
+    // Servir Frontend (Pasta dist)
+    const distPath = path.resolve(__dirname, 'dist');
+    if (existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+          res.sendFile(path.join(distPath, 'index.html'));
+        } else {
+          res.status(404).json({ error: 'Rota de API não encontrada' });
+        }
+      });
     }
-  });
-  console.log('📦 Servindo frontend da pasta:', distPath);
-} else {
-  console.warn('⚠️ Pasta dist não encontrada.');
-}
 
-// Iniciar Servidor
-const targetPort = process.env.PORT ? (isNaN(Number(process.env.PORT)) ? process.env.PORT : Number(process.env.PORT)) : 3000;
+    // Iniciar Servidor (Compatível com Passenger)
+    httpServer.listen(PORT, () => {
+        console.log(`🚀 Orion Online: ${PORT}`);
+    });
 
-if (typeof targetPort === 'string') {
-    httpServer.listen(targetPort, () => {
-        console.log(`🚀 Orion Online (Socket): ${targetPort}`);
-    });
-} else {
-    httpServer.listen(targetPort, '0.0.0.0', () => {
-        console.log(`🚀 Orion Online (Porta): ${targetPort}`);
-    });
+    // Capturar erros não tratados
+    process.on('uncaughtException', logFatalError);
+    process.on('unhandledRejection', logFatalError);
+
+} catch (error) {
+    logFatalError(error);
+    process.exit(1);
 }
