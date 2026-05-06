@@ -7,7 +7,11 @@ const serverPath = path.join(__dirname, 'server.ts');
 
 console.log('🚀 Orion Launcher: Iniciando com ts-node...');
 
-const child = spawn(process.execPath, [tsNodePath, '--esm', serverPath], {
+const child = spawn(process.execPath, [
+    '--loader', 'ts-node/esm',
+    '--experimental-specifier-resolution=node',
+    serverPath
+], {
     stdio: 'inherit',
     env: Object.assign({}, process.env, { NODE_ENV: 'production' }),
     shell: true
