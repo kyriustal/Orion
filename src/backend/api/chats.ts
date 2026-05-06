@@ -1,47 +1,74 @@
 import { Router } from 'express';
+import { getSupabase } from '../services/supabase.service.ts';
 
 export const chatsRouter = Router();
 
-// GET /api/chats - Listar conversas ativas (Caixa de Entrada)
+// GET /api/chats - Listar conversas reais
 chatsRouter.get('/', async (req, res) => {
-  const orgId = req.user?.org_id;
-  
-  // TODO: Buscar da tabela chat_sessions
-  res.json([
-    { id: 'session-1', user_phone: '5511999999999', last_interaction: new Date().toISOString(), is_human_overflow: true, unread: 2 },
-    { id: 'session-2', user_phone: '5511888888888', last_interaction: new Date(Date.now() - 3600000).toISOString(), is_human_overflow: false, unread: 0 }
-  ]);
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('chat_sessions')
+      .select('*')
+      .order('last_interaction', { ascending: false });
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    console.error("[Chats] Erro ao listar:", error);
+    res.status(500).json({ error: 'Falha ao buscar conversas' });
+  }
 });
 
-// GET /api/chats/:sessionId/messages - Obter histórico de uma conversa
+// GET /api/chats/:sessionId/messages - Histórico real
 chatsRouter.get('/:sessionId/messages', async (req, res) => {
   const { sessionId } = req.params;
-  
-  // TODO: Buscar da tabela messages
-  res.json([
-    { id: 'msg-1', role: 'user', content: 'Gostaria de falar com um humano', created_at: new Date(Date.now() - 60000).toISOString() },
-    { id: 'msg-2', role: 'model', content: 'Um atendente humano assumirá a conversa em breve.', created_at: new Date(Date.now() - 58000).toISOString() }
-  ]);
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    console.error("[Messages] Erro ao buscar histórico:", error);
+    res.status(500).json({ error: 'Falha ao buscar histórico' });
+  }
 });
 
-// POST /api/chats/:sessionId/takeover - Assumir atendimento (Pausa a IA)
+// POST /api/chats/:sessionId/takeover - Assumir atendimento
 chatsRouter.post('/:sessionId/takeover', async (req, res) => {
   const { sessionId } = req.params;
-  // TODO: Update chat_sessions set is_human_overflow = true
-  res.json({ message: 'Atendimento humano iniciado. IA pausada para este chat.' });
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('chat_sessions')
+      .update({ is_human_overflow: true })
+      .eq('id', sessionId);
+
+    if (error) throw error;
+    res.json({ message: 'Atendimento humano iniciado.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Falha ao assumir chat' });
+  }
 });
 
-// POST /api/chats/:sessionId/resolve - Resolver atendimento (Reativa a IA)
+// POST /api/chats/:sessionId/resolve - Reativar IA
 chatsRouter.post('/:sessionId/resolve', async (req, res) => {
   const { sessionId } = req.params;
-  // TODO: Update chat_sessions set is_human_overflow = false
-  res.json({ message: 'Atendimento resolvido. IA reativada para este chat.' });
-});
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('chat_sessions')
+      .update({ is_human_overflow: false })
+      .eq('id', sessionId);
 
-// POST /api/chats/:sessionId/send - Enviar mensagem manual pelo painel
-chatsRouter.post('/:sessionId/send', async (req, res) => {
-  const { sessionId } = req.params;
-  const { message } = req.body;
-  // TODO: Disparar via WhatsAppService e salvar na tabela messages com role 'agent'
-  res.json({ message: 'Mensagem enviada com sucesso.' });
+    if (error) throw error;
+    res.json({ message: 'Atendimento resolvido. IA reativada.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Falha ao resolver chat' });
+  }
 });

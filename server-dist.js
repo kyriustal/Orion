@@ -414,12 +414,24 @@ authRouter.get("/me", requireAuth, async (req, res) => {
 // src/backend/api/dashboard.ts
 import { Router as Router3 } from "express";
 var dashboardRouter = Router3();
-dashboardRouter.get("/stats", (req, res) => {
-  res.json({
-    activeChats: 0,
-    messagesToday: 0,
-    automationsRunning: 0
-  });
+dashboardRouter.get("/stats", async (req, res) => {
+  try {
+    const supabase = getSupabase();
+    const { count: activeChats, error: chatError } = await supabase.from("chat_sessions").select("*", { count: "exact", head: true });
+    const { count: messagesToday, error: msgError } = await supabase.from("messages").select("*", { count: "exact", head: true });
+    const { count: automationsRunning, error: autoError } = await supabase.from("automations").select("*", { count: "exact", head: true }).eq("status", "active");
+    if (chatError || msgError || autoError) {
+      console.error("[Dashboard] Erro ao buscar stats:", chatError || msgError || autoError);
+    }
+    res.json({
+      activeChats: activeChats || 0,
+      messagesToday: messagesToday || 0,
+      automationsRunning: automationsRunning || 0
+    });
+  } catch (error) {
+    console.error("[Dashboard] Falha critica:", error);
+    res.status(500).json({ error: "Erro ao carregar estat\xEDsticas" });
+  }
 });
 
 // src/backend/api/whatsapp.ts
@@ -495,66 +507,13 @@ whatsappRouter.post("/config", requireAuth, async (req, res) => {
 
 // src/backend/api/agent.ts
 import { Router as Router5 } from "express";
-
-// src/backend/services/automation.service.ts
-var AutomationService = class {
-  /**
-   * Tenta identificar se uma mensagem do usuário deve disparar uma automação.
-   * @param orgId ID da Organização
-   * @param message Mensagem do Usuário
-   * @returns A automação disparada ou null
-   */
-  static async triggerAutomation(orgId, message) {
-    const supabase = getSupabase();
-    const { data: automations } = await supabase.from("automations").select("*").eq("org_id", orgId).eq("status", "active");
-    if (!automations || automations.length === 0) return null;
-    for (const auto of automations) {
-      const keywords = auto.config?.keywords || [];
-      const msgLower = message.toLowerCase();
-      if (keywords.some((kw) => msgLower.includes(kw.toLowerCase()))) {
-        console.log(`[Automation] Gatilho ativado: "${auto.name}" para a mensagem: "${message}"`);
-        return auto;
-      }
-    }
-    return null;
-  }
-  /**
-   * Executa uma ação de automação.
-   */
-  static async executeAction(automation, context) {
-    const type = automation.type;
-    const config = automation.config;
-    switch (type) {
-      case "lead_capture":
-        console.log("[Automation] Executando Lead Capture...");
-        return { reply: config?.success_message || "Obrigado! Seus dados foram anotados." };
-      case "auto_reply":
-        return { reply: config?.reply_text };
-      default:
-        return null;
-    }
-  }
-};
-
-// src/backend/api/agent.ts
 var agentRouter = Router5();
 agentRouter.post("/simulate", async (req, res) => {
   const { message, history } = req.body;
-  const org_id = req.user?.org_id;
-  if (!org_id) return res.status(401).json({ error: "Nao autorizado" });
+  const org_id = req.user?.org_id || "00000000-0000-0000-0000-000000000000";
   try {
     const supabase = getSupabase();
     const { data: org } = await supabase.from("organizations").select("*").eq("id", org_id).single();
-    const triggeredAuto = await AutomationService.triggerAutomation(org_id, message);
-    if (triggeredAuto) {
-      const actionResult = await AutomationService.executeAction(triggeredAuto, { org_id });
-      if (actionResult && actionResult.reply) {
-        return res.json({
-          reply: actionResult.reply,
-          automation_triggered: triggeredAuto.name
-        });
-      }
-    }
     let knowledge = "";
     try {
       const embedding = await GeminiService.generateEmbeddings(message);
@@ -568,33 +527,38 @@ agentRouter.post("/simulate", async (req, res) => {
         knowledge = chunks.map((c) => c.content).join("\n\n---\n\n");
       }
     } catch (ragError) {
-      console.warn("RAG Fallback triggered:", ragError);
       knowledge = org?.product_description || "";
     }
     const botName = org?.chatbot_name || "Orion";
     const companyName = org?.name || "Nossa Empresa";
     const systemInstruction = `Voce e o assistente virtual ${botName} da empresa ${companyName}.
-        
-        CONTEXTO EMPRESARIAL:
-        ${org?.product_description || "Atendimento profissional e eficiente."}
-        
-        CONHECIMENTO ADICIONAL:
-        ${knowledge || "Sem documentos adicionais."}
-        
-        REGRAS:
-        - Responda de forma curta e objetiva.
-        - Se nao souber, diga que vai transferir para um humano.
-        - Use emojis: ${org?.use_emojis ? "SIM" : "NAO"}.
-        - Tom de voz: Profissional e Acolhedor.`;
+        CONTEXTO: ${org?.product_description || "Atendimento profissional."}
+        CONHECIMENTO: ${knowledge}`;
     const response = await AIOrchestratorService.generateChatResponse(
       systemInstruction,
       history || [],
       message
     );
+    const sessionId = `sim-${Date.now()}`;
+    await supabase.from("chat_sessions").upsert({
+      id: sessionId,
+      org_id,
+      user_phone: "Simula\xE7\xE3o Web"
+    });
+    await supabase.from("messages").insert({
+      session_id: sessionId,
+      role: "user",
+      content: message
+    });
+    await supabase.from("messages").insert({
+      session_id: sessionId,
+      role: "model",
+      content: response.text
+    });
     res.json({ reply: response.text });
   } catch (error) {
-    console.error("[Agent API] Erro critico:", error);
-    res.status(500).json({ error: "Erro interno no servidor de IA." });
+    console.error("[Agent API] Erro:", error);
+    res.status(500).json({ error: "Erro interno." });
   }
 });
 
@@ -602,31 +566,49 @@ agentRouter.post("/simulate", async (req, res) => {
 import { Router as Router6 } from "express";
 var chatsRouter = Router6();
 chatsRouter.get("/", async (req, res) => {
-  const orgId = req.user?.org_id;
-  res.json([
-    { id: "session-1", user_phone: "5511999999999", last_interaction: (/* @__PURE__ */ new Date()).toISOString(), is_human_overflow: true, unread: 2 },
-    { id: "session-2", user_phone: "5511888888888", last_interaction: new Date(Date.now() - 36e5).toISOString(), is_human_overflow: false, unread: 0 }
-  ]);
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from("chat_sessions").select("*").order("last_interaction", { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    console.error("[Chats] Erro ao listar:", error);
+    res.status(500).json({ error: "Falha ao buscar conversas" });
+  }
 });
 chatsRouter.get("/:sessionId/messages", async (req, res) => {
   const { sessionId } = req.params;
-  res.json([
-    { id: "msg-1", role: "user", content: "Gostaria de falar com um humano", created_at: new Date(Date.now() - 6e4).toISOString() },
-    { id: "msg-2", role: "model", content: "Um atendente humano assumir\xE1 a conversa em breve.", created_at: new Date(Date.now() - 58e3).toISOString() }
-  ]);
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from("messages").select("*").eq("session_id", sessionId).order("created_at", { ascending: true });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (error) {
+    console.error("[Messages] Erro ao buscar hist\xF3rico:", error);
+    res.status(500).json({ error: "Falha ao buscar hist\xF3rico" });
+  }
 });
 chatsRouter.post("/:sessionId/takeover", async (req, res) => {
   const { sessionId } = req.params;
-  res.json({ message: "Atendimento humano iniciado. IA pausada para este chat." });
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase.from("chat_sessions").update({ is_human_overflow: true }).eq("id", sessionId);
+    if (error) throw error;
+    res.json({ message: "Atendimento humano iniciado." });
+  } catch (error) {
+    res.status(500).json({ error: "Falha ao assumir chat" });
+  }
 });
 chatsRouter.post("/:sessionId/resolve", async (req, res) => {
   const { sessionId } = req.params;
-  res.json({ message: "Atendimento resolvido. IA reativada para este chat." });
-});
-chatsRouter.post("/:sessionId/send", async (req, res) => {
-  const { sessionId } = req.params;
-  const { message } = req.body;
-  res.json({ message: "Mensagem enviada com sucesso." });
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase.from("chat_sessions").update({ is_human_overflow: false }).eq("id", sessionId);
+    if (error) throw error;
+    res.json({ message: "Atendimento resolvido. IA reativada." });
+  } catch (error) {
+    res.status(500).json({ error: "Falha ao resolver chat" });
+  }
 });
 
 // src/backend/api/automations.ts
