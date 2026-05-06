@@ -198,3 +198,11 @@ CREATE POLICY "Enable all for service role" ON public.campaigns FOR ALL USING (t
 INSERT INTO public.organizations (id, name, owner_email) 
 VALUES ('00000000-0000-0000-0000-000000000000', 'Orion Master Demo', 'demo@orion.com') 
 ON CONFLICT (id) DO NOTHING;
+
+-- 8. BUCKET DE STORAGE PARA DOCUMENTOS
+-- Execute este bloco separadamente se o anterior já tiver sido executado.
+-- O bucket 'knowledge' é criado automaticamente pelo servidor ao fazer o primeiro upload.
+-- Mas pode criá-lo manualmente no Supabase Dashboard > Storage > New Bucket:
+--   Nome: knowledge
+--   Public: false
+--   Max file size: 10MB (10485760 bytes)

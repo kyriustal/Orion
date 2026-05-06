@@ -1,11 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Upload, FileText, Loader2, CheckCircle2, Trash2 } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle2, Trash2, AlertCircle, RefreshCw } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/src/components/ui/button";
 import { toast } from "sonner";
 
 type KnowledgeFile = {
-  id: string;
+  id: string | number;
   name: string;
   size: string | number;
   status: string;
@@ -21,13 +21,20 @@ function formatSize(bytes: number): string {
 export default function KnowledgeBase() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<KnowledgeFile[]>([]);
 
-  // Load existing documents from the database on mount
   useEffect(() => {
     loadFiles();
-  }, []);
+    // Auto-refresh a cada 10s para atualizar status de documentos "processing"
+    const interval = setInterval(() => {
+      if (files.some(f => f.status === 'processing')) {
+        loadFiles();
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [files.length]);
 
   const loadFiles = async () => {
     setIsLoading(true);
@@ -39,7 +46,7 @@ export default function KnowledgeBase() {
       const data = await response.json();
       setFiles(data.map((f: any) => ({
         id: f.id,
-        name: f.name || f.original_name,
+        name: f.original_name || f.name,
         size: typeof f.size === "number" ? formatSize(f.size) : f.size,
         status: f.status || "ready",
         created_at: f.created_at
@@ -53,9 +60,7 @@ export default function KnowledgeBase() {
   };
 
   const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,8 +73,7 @@ export default function KnowledgeBase() {
     }
 
     setIsUploading(true);
-
-    const tempId = Date.now().toString();
+    const tempId = `temp-${Date.now()}`;
     const fileSizeStr = formatSize(file.size);
 
     setFiles(prev => [
@@ -83,9 +87,7 @@ export default function KnowledgeBase() {
     try {
       const response = await fetch("/api/knowledge/upload", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` },
         body: formData,
       });
 
@@ -96,23 +98,41 @@ export default function KnowledgeBase() {
 
       const data = await response.json();
 
-      // Update the temporary file entry with real data from the server
       setFiles(prev => prev.map(f =>
         f.id === tempId
-          ? { ...f, id: data.file.id, status: "ready" }
+          ? { ...f, id: data.file.id, status: "processing" }
           : f
       ));
 
-      toast.success(`✅ "${file.name}" indexado com sucesso! A IA já pode usar este documento.`);
+      toast.success(`✅ "${file.name}" enviado! A IA está a indexar o documento...`);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Erro ao fazer upload do arquivo.");
       setFiles(prev => prev.filter(f => f.id !== tempId));
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDelete = async (fileId: string | number, fileName: string) => {
+    if (!confirm(`Tem a certeza que deseja eliminar "${fileName}"? Esta ação irá remover todo o conhecimento associado.`)) return;
+
+    setDeletingId(fileId);
+    try {
+      const response = await fetch(`/api/knowledge/${fileId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      if (!response.ok) throw new Error("Erro ao eliminar documento");
+
+      setFiles(prev => prev.filter(f => f.id !== fileId));
+      toast.success(`🗑️ "${fileName}" eliminado com sucesso.`);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao eliminar o documento.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -120,13 +140,14 @@ export default function KnowledgeBase() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Base de Conhecimento (RAG)</h2>
-        <p className="text-zinc-500">Faça upload de documentos para a IA usar como contexto nas respostas. Quanto mais documentos, mais inteligente fica o agente.</p>
+        <p className="text-zinc-500">Faça upload de documentos para a IA usar como contexto nas respostas. Quanto mais documentos, mais inteligente e preciso fica o agente.</p>
       </div>
 
+      {/* Upload Card */}
       <Card>
         <CardHeader>
           <CardTitle>Upload de Arquivos</CardTitle>
-          <CardDescription>PDF, TXT, DOCX, PNG, JPG, CSV — até 10MB por arquivo.</CardDescription>
+          <CardDescription>PDF, TXT, DOCX, CSV — até 10MB por arquivo.</CardDescription>
         </CardHeader>
         <CardContent>
           <input
@@ -135,11 +156,15 @@ export default function KnowledgeBase() {
             onChange={handleFileChange}
             className="hidden"
             aria-label="Upload de documento para base de conhecimento"
-            accept=".pdf,.txt,.docx,.png,.jpg,.jpeg,.csv,.xlsx,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword"
+            accept=".pdf,.txt,.docx,.doc,.csv,.xlsx,.md,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword"
           />
           <div
-            onClick={handleUploadClick}
-            className="border-2 border-dashed border-zinc-200 rounded-xl p-12 flex flex-col items-center justify-center text-center hover:bg-emerald-50 hover:border-emerald-400 transition-colors cursor-pointer"
+            onClick={!isUploading ? handleUploadClick : undefined}
+            className={`border-2 border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center transition-all ${
+              isUploading
+                ? 'border-emerald-300 bg-emerald-50 cursor-wait'
+                : 'border-zinc-200 hover:bg-emerald-50 hover:border-emerald-400 cursor-pointer'
+            }`}
           >
             <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-4 border border-emerald-200">
               {isUploading ? (
@@ -149,21 +174,23 @@ export default function KnowledgeBase() {
               )}
             </div>
             <p className="text-sm font-semibold text-zinc-900">
-              {isUploading ? "A indexar documento..." : "Clique para enviar ou arraste um ficheiro"}
+              {isUploading ? "A fazer upload e indexar documento..." : "Clique para enviar ou arraste um ficheiro"}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">PDF, TXT, DOCX, PNG, JPG, CSV (Máx 10MB)</p>
+            <p className="text-xs text-zinc-500 mt-1">PDF, TXT, DOCX, CSV (Máx 10MB)</p>
           </div>
         </CardContent>
       </Card>
 
+      {/* Documents List */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Documentos Indexados</CardTitle>
-            <CardDescription>A IA consulta estes documentos em tempo real ao responder.</CardDescription>
+            <CardDescription>A IA consulta estes documentos em tempo real ao responder. Documentos em "Indexando..." ficam disponíveis em alguns segundos.</CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={loadFiles} disabled={isLoading} className="gap-2 text-zinc-500">
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "↻ Atualizar"}
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Atualizar
           </Button>
         </CardHeader>
         <CardContent>
@@ -177,30 +204,56 @@ export default function KnowledgeBase() {
               <div className="text-center py-10 border-2 border-dashed rounded-xl bg-zinc-50/50">
                 <FileText className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
                 <p className="text-zinc-600 font-medium text-sm">Nenhum documento indexado</p>
-                <p className="text-zinc-400 text-xs mt-1">Envie um PDF, TXT ou CSV acima para treinar o agente.</p>
+                <p className="text-zinc-400 text-xs mt-1">Envie um PDF, TXT, DOCX ou CSV acima para treinar o agente.</p>
               </div>
             ) : (
               files.map(file => (
-                <div key={file.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                      <FileText className="w-5 h-5 text-emerald-600" />
+                <div key={file.id} className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100 flex-shrink-0">
+                      {file.status === 'error' ? (
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                      ) : (
+                        <FileText className="w-5 h-5 text-emerald-600" />
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-zinc-900">{file.name}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-900 truncate">{file.name}</p>
                       <p className="text-xs text-zinc-500">{file.size}</p>
                     </div>
                   </div>
-                  <div>
-                    {file.status === 'ready' ? (
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Status badge */}
+                    {file.status === 'ready' && (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Pronto
                       </span>
-                    ) : (
+                    )}
+                    {file.status === 'processing' && (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                         <Loader2 className="w-3.5 h-3.5 animate-spin" /> Indexando...
                       </span>
                     )}
+                    {file.status === 'error' && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                        <AlertCircle className="w-3.5 h-3.5" /> Erro
+                      </span>
+                    )}
+                    {/* Delete button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={deletingId === file.id}
+                      onClick={() => handleDelete(file.id, file.name)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-red-500 hover:bg-red-50 h-8 w-8 p-0"
+                      title="Eliminar documento"
+                    >
+                      {deletingId === file.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               ))
