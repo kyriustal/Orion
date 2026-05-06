@@ -7,6 +7,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 
 // Determinar __dirname para ESM
+// Compatibilidade CJS/ESM para __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -65,7 +66,7 @@ try {
       allowEIO3: true
     });
 
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 3001;
 
     // Middlewares
     app.use(express.json());
