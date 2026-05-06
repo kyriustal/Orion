@@ -1,1 +1,0 @@
-// Removido durante a restauração.
