@@ -976,10 +976,15 @@ for (const p of envPaths) {
 var app = express();
 var httpServer = createServer(app);
 var io = new Server(httpServer, {
+  path: "/socket.io/",
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ["polling", "websocket"],
+  // Garante compatibilidade
+  allowEIO3: true
 });
 var PORT = process.env.PORT || 3001;
 app.use(express.json());

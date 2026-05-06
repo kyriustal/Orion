@@ -43,10 +43,14 @@ import { templatesRouter } from "./src/backend/api/templates.ts";
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
+  path: '/socket.io/',
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ['polling', 'websocket'], // Garante compatibilidade
+  allowEIO3: true
 });
 
 const PORT = process.env.PORT || 3001;
