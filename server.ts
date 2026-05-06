@@ -33,7 +33,7 @@ if (!envFound) {
 }
 
 // Importações das APIs
-import webhookRouter from "./src/backend/api/webhook.ts";
+import { webhookRouter } from "./src/backend/api/webhook.ts";
 import { authRouter } from "./src/backend/api/auth.ts";
 import { dashboardRouter } from "./src/backend/api/dashboard.ts";
 import { whatsappRouter } from "./src/backend/api/whatsapp.ts";
