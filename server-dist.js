@@ -967,7 +967,7 @@ var envPaths = [
   path2.join(__dirname2, "..", ".env")
 ];
 for (const p of envPaths) {
-  if (fs.existsSync(p)) {
+  if (existsSync(p)) {
     dotenv2.config({ path: p });
     console.log(`\u2705 Vari\xE1veis carregadas de: ${p}`);
     break;
@@ -989,10 +989,8 @@ app.get("/api/debug-env", (req, res) => {
     status: "online",
     port: PORT,
     node_version: process.version,
-    env_loaded: existsSync(envPath),
-    supabase_url: process.env.SUPABASE_URL ? "DEFINIDA" : "AUSENTE",
-    gemini_key: process.env.GEMINI_API_KEY ? "DEFINIDA" : "AUSENTE",
-    openai_key: process.env.OPENAI_API_KEY ? "DEFINIDA" : "AUSENTE"
+    supabase_url: process.env.VITE_SUPABASE_URL ? "DEFINIDA" : "AUSENTE",
+    gemini_key: process.env.GOOGLE_GEMINI_API_KEY ? "DEFINIDA" : "AUSENTE"
   });
 });
 app.use("/api/webhook", webhookRouter);
@@ -1014,16 +1012,14 @@ if (existsSync(distPath)) {
   app.get("*", (req, res) => {
     if (!req.path.startsWith("/api")) {
       res.sendFile(path2.join(distPath, "index.html"));
+    } else {
+      res.status(404).json({ error: "Rota de API n\xE3o encontrada" });
     }
   });
   console.log("\u{1F4E6} Servindo frontend da pasta:", distPath);
 } else {
-  console.warn("\u26A0\uFE0F Pasta dist n\xE3o encontrada. Rodar build localmente.");
+  console.warn("\u26A0\uFE0F Pasta dist n\xE3o encontrada.");
 }
-io.on("connection", (socket) => {
-  console.log("Novo cliente conectado:", socket.id);
-  socket.on("disconnect", () => console.log("Cliente desconectado"));
-});
 var targetPort = process.env.PORT ? isNaN(Number(process.env.PORT)) ? process.env.PORT : Number(process.env.PORT) : 3e3;
 if (typeof targetPort === "string") {
   httpServer.listen(targetPort, () => {

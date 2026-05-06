@@ -1,6 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import dotenv from 'dotenv';
 import express from "express";
 import { createServer } from "http";
@@ -18,14 +18,14 @@ const envPaths = [
 ];
 
 for (const p of envPaths) {
-    if (fs.existsSync(p)) {
+    if (existsSync(p)) {
         dotenv.config({ path: p });
         console.log(`✅ Variáveis carregadas de: ${p}`);
         break;
     }
 }
 
-// Importações das APIs
+// Importações das APIs (Garantindo extensões .ts para o compilador)
 import { webhookRouter } from "./src/backend/api/webhook.ts";
 import { authRouter } from "./src/backend/api/auth.ts";
 import { dashboardRouter } from "./src/backend/api/dashboard.ts";
@@ -55,16 +55,14 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rota de Diagnóstico para Hostinger
+// Rota de Diagnóstico
 app.get('/api/debug-env', (req, res) => {
   res.json({
     status: 'online',
     port: PORT,
     node_version: process.version,
-    env_loaded: existsSync(envPath),
-    supabase_url: process.env.SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE',
-    gemini_key: process.env.GEMINI_API_KEY ? 'DEFINIDA' : 'AUSENTE',
-    openai_key: process.env.OPENAI_API_KEY ? 'DEFINIDA' : 'AUSENTE'
+    supabase_url: process.env.VITE_SUPABASE_URL ? 'DEFINIDA' : 'AUSENTE',
+    gemini_key: process.env.GOOGLE_GEMINI_API_KEY ? 'DEFINIDA' : 'AUSENTE'
   });
 });
 
@@ -88,33 +86,25 @@ const distPath = path.resolve(__dirname, 'dist');
 if (existsSync(distPath)) {
   app.use(express.static(distPath));
   app.get('*', (req, res) => {
-    // Evitar que rotas de API caiam no index.html
     if (!req.path.startsWith('/api')) {
       res.sendFile(path.join(distPath, 'index.html'));
+    } else {
+      res.status(404).json({ error: 'Rota de API não encontrada' });
     }
   });
   console.log('📦 Servindo frontend da pasta:', distPath);
 } else {
-  console.warn('⚠️ Pasta dist não encontrada. Rodar build localmente.');
+  console.warn('⚠️ Pasta dist não encontrada.');
 }
 
-// Socket.io
-io.on("connection", (socket) => {
-  console.log("Novo cliente conectado:", socket.id);
-  socket.on("disconnect", () => console.log("Cliente desconectado"));
-});
-
 // Iniciar Servidor
-// Conforme solicitado: listen(Number(process.env.PORT) || 3000, '0.0.0.0')
 const targetPort = process.env.PORT ? (isNaN(Number(process.env.PORT)) ? process.env.PORT : Number(process.env.PORT)) : 3000;
 
 if (typeof targetPort === 'string') {
-    // Se for um socket (Hostinger/Passenger)
     httpServer.listen(targetPort, () => {
         console.log(`🚀 Orion Online (Socket): ${targetPort}`);
     });
 } else {
-    // Se for uma porta (Local ou Hostinger Port)
     httpServer.listen(targetPort, '0.0.0.0', () => {
         console.log(`🚀 Orion Online (Porta): ${targetPort}`);
     });
