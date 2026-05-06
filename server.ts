@@ -10,26 +10,19 @@ import { Server } from "socket.io";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Carregar .env de múltiplos caminhos possíveis (Hostinger)
-const possibleEnvPaths = [
-  path.resolve(__dirname, '.env'),
-  path.resolve(process.cwd(), '.env'),
-  path.join(__dirname, '..', '.env')
+// Configuração de Ambiente com busca exaustiva
+const envPaths = [
+    path.join(__dirname, '.env'),
+    path.join(process.cwd(), '.env'),
+    path.join(__dirname, '..', '.env')
 ];
 
-let envFound = false;
-for (const p of possibleEnvPaths) {
-  if (existsSync(p)) {
-    dotenv.config({ path: p });
-    console.log('✅ Arquivo .env carregado de:', p);
-    envFound = true;
-    break;
-  }
-}
-
-if (!envFound) {
-  console.warn('⚠️ Nenhum arquivo .env encontrado. Usando variáveis de ambiente do sistema.');
-  dotenv.config();
+for (const p of envPaths) {
+    if (fs.existsSync(p)) {
+        dotenv.config({ path: p });
+        console.log(`✅ Variáveis carregadas de: ${p}`);
+        break;
+    }
 }
 
 // Importações das APIs

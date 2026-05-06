@@ -961,23 +961,17 @@ templatesRouter.post("/", requireAuth, async (req, res) => {
 // server.ts
 var __filename2 = fileURLToPath2(import.meta.url);
 var __dirname2 = path2.dirname(__filename2);
-var possibleEnvPaths = [
-  path2.resolve(__dirname2, ".env"),
-  path2.resolve(process.cwd(), ".env"),
+var envPaths = [
+  path2.join(__dirname2, ".env"),
+  path2.join(process.cwd(), ".env"),
   path2.join(__dirname2, "..", ".env")
 ];
-var envFound = false;
-for (const p of possibleEnvPaths) {
-  if (existsSync(p)) {
+for (const p of envPaths) {
+  if (fs.existsSync(p)) {
     dotenv2.config({ path: p });
-    console.log("\u2705 Arquivo .env carregado de:", p);
-    envFound = true;
+    console.log(`\u2705 Vari\xE1veis carregadas de: ${p}`);
     break;
   }
-}
-if (!envFound) {
-  console.warn("\u26A0\uFE0F Nenhum arquivo .env encontrado. Usando vari\xE1veis de ambiente do sistema.");
-  dotenv2.config();
 }
 var app = express();
 var httpServer = createServer(app);
